@@ -1,72 +1,111 @@
 import React from 'react';
-import { useKPI, getQuarterFromMonths } from '../kpi/KPIContext';
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const QUARTERS = {
-  'Q4': ['Jan', 'Feb', 'Mar'],
-  'Q1': ['Apr', 'May', 'Jun'],
-  'Q2': ['Jul', 'Aug', 'Sep'],
-  'Q3': ['Oct', 'Nov', 'Dec'],
-};
+import { useKPI } from '../kpi/KPIContext';
+import { QUARTER_MONTH_MAP, getShortMonth, getCurrentFinancialYear, getAllQuarters } from '../../lib/quarterUtils';
+import { X } from 'lucide-react';
 
 export default function MonthSelector() {
-  const { selectedMonths, setSelectedMonths } = useKPI();
+  const { selectedMonths, selectedQuarters, setSelectedQuarters } = useKPI();
 
-  const toggleMonth = (month: string) => {
-    if (selectedMonths.includes(month)) {
-      setSelectedMonths(selectedMonths.filter(m => m !== month));
+  /**
+   * Toggle a quarter ON/OFF
+   * Multiple quarters can be selected at once
+   */
+  const toggleQuarter = (quarter: string) => {
+    if (selectedQuarters.includes(quarter)) {
+      setSelectedQuarters(selectedQuarters.filter(q => q !== quarter));
     } else {
-      setSelectedMonths([...selectedMonths, month]);
+      setSelectedQuarters([...selectedQuarters, quarter]);
     }
   };
 
-  const setQuarter = (quarter: string) => {
-    const months = QUARTERS[quarter as keyof typeof QUARTERS];
-    setSelectedMonths(months);
+  /**
+   * Select all quarters
+   */
+  const selectAllQuarters = () => {
+    setSelectedQuarters(getAllQuarters());
   };
 
-  const detectedQuarter = getQuarterFromMonths(selectedMonths);
+  /**
+   * Clear all selections (default to Q4)
+   */
+  const clearSelection = () => {
+    setSelectedQuarters(['Q4']);
+  };
+
+  const financialYear = getCurrentFinancialYear();
+  const allQuarters = getAllQuarters();
 
   return (
-    <div className="flex items-center justify-center gap-4">
-      {/* Quarter Quick Buttons */}
-      <div className="flex gap-2">
-        {Object.keys(QUARTERS).map((q) => (
+    <div className="flex items-center justify-center gap-6 flex-wrap">
+      {/* Financial Year Display */}
+      <div className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-lg whitespace-nowrap">
+        {financialYear}
+      </div>
+
+      {/* Quarter Multi-Select Buttons */}
+      <div className="flex gap-2 items-center">
+        {allQuarters.map((quarter) => (
           <button
-            key={q}
-            onClick={() => setQuarter(q)}
-            className={`px-3 py-1 rounded-lg font-semibold text-xs transition-all ${
-              detectedQuarter === q
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md'
+            key={quarter}
+            onClick={() => toggleQuarter(quarter)}
+            className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all duration-200 ${
+              selectedQuarters.includes(quarter)
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/30 scale-105'
                 : 'bg-white text-slate-600 border border-slate-300 hover:border-slate-400 hover:bg-slate-50'
             }`}
+            title={`${quarter}: ${QUARTER_MONTH_MAP[quarter]?.join(', ')}`}
           >
-            {q}
+            {quarter}
           </button>
         ))}
       </div>
 
-      {/* Month Buttons - condensed */}
-      <div className="flex gap-1">
-        {MONTHS.map((month) => (
+      {/* Selected Months Display */}
+      {selectedMonths.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-medium text-slate-500">Months:</span>
+          <div className="flex gap-1 flex-wrap">
+            {selectedMonths.map((month) => (
+              <div
+                key={month}
+                className="px-2 py-1 rounded-full bg-cyan-100 text-cyan-700 text-xs font-medium border border-cyan-300"
+              >
+                {getShortMonth(month)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions */}
+      <div className="flex gap-2">
+        {selectedQuarters.length < allQuarters.length && (
           <button
-            key={month}
-            onClick={() => toggleMonth(month)}
-            className={`px-2 py-1 rounded text-xs font-semibold transition-all ${
-              selectedMonths.includes(month)
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
-                : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-            }`}
+            onClick={selectAllQuarters}
+            className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 font-medium transition-colors"
+            title="Select all quarters"
           >
-            {month.substring(0, 1)}
+            All
           </button>
-        ))}
+        )}
+        {selectedQuarters.length > 1 && (
+          <button
+            onClick={clearSelection}
+            className="text-xs px-2 py-1 rounded bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 font-medium transition-colors flex items-center gap-1"
+            title="Reset to Q4"
+          >
+            <X className="w-3 h-3" />
+            Reset
+          </button>
+        )}
       </div>
 
-      {/* Status Display */}
-      {detectedQuarter && (
-        <div className="text-xs bg-cyan-100 border border-cyan-300 rounded px-2 py-1 text-cyan-700 font-bold whitespace-nowrap">
-          {detectedQuarter}
+      {/* Selection Summary */}
+      {selectedQuarters.length > 0 && (
+        <div className="text-xs text-slate-600 font-medium">
+          {selectedQuarters.length === 1 && selectedQuarters.length < 4 && `${selectedQuarters.join(', ')} selected`}
+          {selectedQuarters.length > 1 && selectedQuarters.length < 4 && `${selectedQuarters.join(', ')} selected`}
+          {selectedQuarters.length === 4 && 'Full year (FY 2025)'}
         </div>
       )}
     </div>

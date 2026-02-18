@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { FULL_MONTHS, QUARTER_MONTH_MAP, getQuartersFromMonths } from '../../lib/quarterUtils';
 
 export interface MarketingKPI {
   id?: string;
@@ -29,25 +30,24 @@ export interface BDKpi {
 interface KPIContextValue {
   marketingData: MarketingKPI[];
   bdData: BDKpi[];
-  selectedMonths: string[];
+  selectedMonths: string[]; // Full month names: January, February, etc.
+  selectedQuarters: string[]; // Q1, Q2, Q3, Q4
   setSelectedMonths: (m: string[]) => void;
+  setSelectedQuarters: (q: string[]) => void;
   reload: () => Promise<void>;
+  currentQuarters: string[];
 }
 
 const KPIContext = createContext<KPIContextValue | undefined>(undefined);
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const QUARTERS = {
-  'Q4': ['Jan', 'Feb', 'Mar'],
-  'Q1': ['Apr', 'May', 'Jun'],
-  'Q2': ['Jul', 'Aug', 'Sep'],
-  'Q3': ['Oct', 'Nov', 'Dec'],
-};
-
+/**
+ * Get quarters from selected full month names
+ * Returns null if no complete quarter is selected, otherwise returns first matching quarter
+ */
 export const getQuarterFromMonths = (selectedMonths: string[]): string | null => {
   if (selectedMonths.length === 0) return null;
   
-  for (const [quarter, months] of Object.entries(QUARTERS)) {
+  for (const [quarter, months] of Object.entries(QUARTER_MONTH_MAP)) {
     const match = months.every(m => selectedMonths.includes(m));
     if (match) return quarter;
   }
@@ -58,6 +58,7 @@ export const KPIProvider: React.FC<React.PropsWithChildren<{}>> = ({ children })
   const [marketingData, setMarketingData] = useState<MarketingKPI[]>([]);
   const [bdData, setBdData] = useState<BDKpi[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedQuarters, setSelectedQuarters] = useState<string[]>([]);
 
   const fetchData = async () => {
     try {
@@ -84,15 +85,47 @@ export const KPIProvider: React.FC<React.PropsWithChildren<{}>> = ({ children })
     await fetchData();
   };
 
+  // Derive current quarters from selected months
+  const currentQuarters = getQuartersFromMonths(selectedMonths);
+
+  // Sync quarters with months - when quarters change, update months
+  useEffect(() => {
+    if (selectedQuarters.length > 0) {
+      const monthsFromQuarters: string[] = [];
+      selectedQuarters.forEach((quarter) => {
+        const months = QUARTER_MONTH_MAP[quarter];
+        if (months) {
+          months.forEach((m) => {
+            if (!monthsFromQuarters.includes(m)) {
+              monthsFromQuarters.push(m);
+            }
+          });
+        }
+      });
+      setSelectedMonths(monthsFromQuarters);
+    }
+  }, [selectedQuarters]);
+
   // Default to Q4 months if nothing selected
   useEffect(() => {
-    if (selectedMonths.length === 0) {
-      setSelectedMonths(['Jan', 'Feb', 'Mar']);
+    if (selectedMonths.length === 0 && selectedQuarters.length === 0) {
+      setSelectedQuarters(['Q4']);
     }
-  }, [selectedMonths.length]);
+  }, [selectedMonths.length, selectedQuarters.length]);
 
   return (
-    <KPIContext.Provider value={{ marketingData, bdData, selectedMonths, setSelectedMonths, reload }}>
+    <KPIContext.Provider
+      value={{
+        marketingData,
+        bdData,
+        selectedMonths,
+        selectedQuarters,
+        setSelectedMonths,
+        setSelectedQuarters,
+        reload,
+        currentQuarters,
+      }}
+    >
       {children}
     </KPIContext.Provider>
   );
