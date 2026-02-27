@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useKPI } from '../kpi/KPIContext';
 import { useDashboardFilter } from '../../lib/dashboardFilterUtils';
 import { FilterStatusBadge } from './FilterStatusBadge';
+import { LABELS } from '../../config/labels';
 
 const toNum = (v: any): number => {
   if (!v) return 0;
@@ -274,8 +275,8 @@ export default function BDMENADashboard() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">BD Dashboard - MENA Region</h1>
-          <p className="text-slate-600">Business Development pipeline for Middle East and North Africa</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">{LABELS.pageTitles.bd.title} - MENA Region</h1>
+          <p className="text-slate-600">{LABELS.pageTitles.bd.subtitle}</p>
         </div>
         <FilterStatusBadge variant="pill" />
       </div>

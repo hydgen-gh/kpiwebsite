@@ -16,6 +16,7 @@ import {
   Upload as UploadIcon,
 } from 'lucide-react';
 import { EmptyState } from './EmptyState';
+import { LABELS } from '../../config/labels';
 import {
   PieChart,
   Pie,
@@ -375,7 +376,7 @@ export default function ProductDashboard() {
 
           {/* Platform Readiness Roadmap */}
           <div className="bg-white rounded-lg border border-slate-200 p-6">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Platform Development Roadmap</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">{LABELS.sections.platformReadiness} Roadmap</h3>
             <div className="space-y-4">
               {pem250.platformReadiness.map((item) => (
                 <div key={item.name}>
@@ -662,7 +663,7 @@ export default function ProductDashboard() {
         {aemStackSize === '5kW' && (
           <>
             <div className="bg-white rounded-lg border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Baseline Tracker - Parameters Not Established</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Manufacturing Baseline Tracker</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {aemStackSize === '5kW' && Array.isArray((aemData as typeof aem5kwData).baselineTracker) ? (
                   (aemData as typeof aem5kwData).baselineTracker.map((item, idx) => (
@@ -700,7 +701,7 @@ export default function ProductDashboard() {
         {aemStackSize === '25kW' && (
           <>
             <div className="bg-white rounded-lg border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Performance Radar - Scale-up Readiness</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Performance Metrics - Scale-up Readiness</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={aemStackSize === '25kW' && 'performanceRadarData' in aemData ? (aemData as typeof aem25kwData).performanceRadarData : []}>
                   <CartesianGrid stroke="#f1f5f9" />
@@ -795,7 +796,7 @@ export default function ProductDashboard() {
 
       {/* Delivery Trend - Full Width */}
       <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Delivery Performance Trend</h3>
+        <h3 className="text-lg font-bold text-slate-900 mb-4">{LABELS.sections.deliveryPerformance} Trend</h3>
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={deliveryData.deliveryTrendData}>
             <CartesianGrid stroke="#f1f5f9" />
@@ -861,8 +862,8 @@ export default function ProductDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Product Scale-Up Control Tower</h2>
-          <p className="text-slate-600">Stack performance, manufacturing readiness, platform development & delivery execution</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">{LABELS.pageTitles.product.title}</h2>
+          <p className="text-slate-600">{LABELS.pageTitles.product.subtitle}</p>
           {selectedMonths.length > 0 && (
             <div className="mt-2 text-sm text-slate-600">
               Viewing: {getMonthDisplay}

@@ -5,6 +5,7 @@ import { useKPI, getQuarterFromMonths } from '../kpi/KPIContext';
 import { useDashboardFilter } from '../../lib/dashboardFilterUtils';
 import { FilterStatusBadge } from './FilterStatusBadge';
 import { EmptyState } from './EmptyState';
+import { LABELS } from '../../config/labels';
 
 export default function OverviewDashboard() {
   const { selectedMonths, marketingData, bdData } = useKPI();
@@ -269,7 +270,7 @@ export default function OverviewDashboard() {
       {/* Chart */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-slate-900">Department Health (Risk-Sorted)</h3>
+          <h3 className="font-semibold text-slate-900">Department Health</h3>
           <button
             onClick={() => setShowLegend(!showLegend)}
             className="text-xs px-3 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium"
@@ -408,8 +409,8 @@ export default function OverviewDashboard() {
       {/* HEADER */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">Company Command Center</h2>
-          <p className="text-slate-600">Real-time strategic performance dashboard</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">{LABELS.pageTitles.executive.title}</h2>
+          <p className="text-slate-600">{LABELS.pageTitles.executive.subtitle}</p>
           {selectedMonths.length > 0 && (
             <div className="mt-2 text-sm text-slate-600">
               Viewing data for: {getMonthDisplay}
@@ -424,7 +425,7 @@ export default function OverviewDashboard() {
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
           <Target className="w-5 h-5 text-teal-600" />
-          Strategic Outcomes (12-18 Months)
+          {LABELS.sections.strategicOutcomes}
         </h3>
         {renderStrategicOutcomes()}
       </div>
@@ -433,7 +434,7 @@ export default function OverviewDashboard() {
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-cyan-600" />
-          Company Performance Snapshot
+          {LABELS.sections.performance}
         </h3>
         {renderPerformanceSnapshot()}
       </div>
@@ -442,7 +443,7 @@ export default function OverviewDashboard() {
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-          KPI Health Status
+          {LABELS.sections.kpiHealth}
         </h3>
         {renderKPIHealth()}
       </div>
@@ -451,7 +452,7 @@ export default function OverviewDashboard() {
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-teal-600" />
-          Capital Efficiency & Deployment
+          {LABELS.sections.capital}
         </h3>
         {renderCapitalDeployment()}
       </div>

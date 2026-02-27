@@ -6,6 +6,7 @@ import { FilterStatusBadge } from './FilterStatusBadge';
 import { DefinitionsSection } from './DefinitionsSection';
 import { useKPI, getQuarterFromMonths } from '../kpi/KPIContext';
 import { useDashboardFilter } from '../../lib/dashboardFilterUtils';
+import { LABELS } from '../../config/labels';
 
 // ============================================================================
 // Helper Components (Reused from Sales/Marketing Dashboards)
@@ -277,8 +278,8 @@ export default function FinancialData() {
       {/* ===== HEADER ===== */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Financial Health Dashboard</h1>
-          <p className="text-slate-600 mb-2">Cash position, burn rate, runway, and capital metrics</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">{LABELS.pageTitles.finance.title}</h1>
+          <p className="text-slate-600 mb-2">{LABELS.pageTitles.finance.subtitle}</p>
           {selectedMonths.length > 0 && (
             <p className="text-sm text-slate-600">
               Viewing data for: <span className="font-medium">{getMonthDisplay}</span>
@@ -297,7 +298,7 @@ export default function FinancialData() {
 
       {/* ===== HERO ROW — CORE FINANCIAL HEALTH ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Core Financial Metrics</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">{LABELS.sections.capital} Metrics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           <HeroKPI
             title="Cash Balance"
@@ -334,7 +335,7 @@ export default function FinancialData() {
 
       {/* ===== CASH POSITION VS TARGET (PRIMARY CHART) ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Cash Position vs Quarterly Target</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">{LABELS.sections.cashflow} Position vs Quarterly Target</h2>
         <div className="bg-white border border-slate-200 rounded-lg p-6">
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={cashComparisonData}>
@@ -358,7 +359,7 @@ export default function FinancialData() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Working Capital Movement */}
         <div>
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Working Capital Movement</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Working {LABELS.sections.capital} Movement</h2>
           <div className="bg-white border border-slate-200 rounded-lg p-6">
             <div className="flex items-center justify-center mb-6">
               <div className="text-center">
@@ -381,7 +382,7 @@ export default function FinancialData() {
 
         {/* Non-Dilutive Funding */}
         <div>
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Non-Dilutive Funding Target</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Non-Dilutive Funding ({LABELS.sections.capital}) Target</h2>
           <div className="bg-white border border-slate-200 rounded-lg p-6">
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -482,7 +483,7 @@ export default function FinancialData() {
 
       {/* ===== RAG STATUS BAND ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Financial Status</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">{LABELS.sections.kpiHealth} Status</h2>
         <RAGBand data={ragStatus} />
       </div>
 

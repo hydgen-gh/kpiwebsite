@@ -32,6 +32,7 @@ import { FilterStatusBadge } from './FilterStatusBadge';
 import { DefinitionsSection } from './DefinitionsSection';
 import { useKPI, getQuarterFromMonths } from '../kpi/KPIContext';
 import { useDashboardFilter } from '../../lib/dashboardFilterUtils';
+import { LABELS } from '../../config/labels';
 
 // ============================================================================
 // Helper Components (Reused from Sales/Marketing/Finance Dashboards)
@@ -364,9 +365,9 @@ export default function RnD() {
       {/* ===== HEADER ===== */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">R&D Execution Cockpit</h1>
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">{LABELS.pageTitles.rnd.title}</h1>
           <p className="text-slate-600 text-sm">
-            Technology risk reduction, IP moat strength, capital efficiency & future optionality
+            {LABELS.pageTitles.rnd.subtitle}
           </p>
           {selectedMonths.length > 0 && (
             <div className="mt-2 text-xs text-slate-600">
@@ -534,7 +535,7 @@ export default function RnD() {
 
       {/* ===== R&D CAPITAL EFFICIENCY: GRANT UTILIZATION ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">R&D Capital Efficiency — Grant Utilization</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">R&D {LABELS.sections.capital} - Grant Utilization</h2>
         <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
           {grantUtilizationData.map((item) => (
             <div key={item.tranche}>
@@ -565,7 +566,7 @@ export default function RnD() {
 
       {/* ===== FUTURE OPTION VALUE CREATION: PROGRAMS ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Future Program Portfolio ({activeProgramsCount}/{activeProgramsTarget} Active)</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Future Program Portfolio ({activeProgramsCount}/{activeProgramsTarget} {LABELS.sections.performance})</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {futurePrograms.map((program) => {
             const statusColor =
@@ -607,7 +608,7 @@ export default function RnD() {
 
       {/* ===== RAG STATUS BAND ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">R&D Health Status</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">R&D {LABELS.sections.kpiHealth}</h2>
         <RAGBand data={ragStatus} />
       </div>
 

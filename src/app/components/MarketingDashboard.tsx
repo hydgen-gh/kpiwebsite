@@ -6,6 +6,7 @@ import { FilterStatusBadge } from './FilterStatusBadge';
 import { DefinitionsSection } from './DefinitionsSection';
 import { useKPI, getQuarterFromMonths } from '../kpi/KPIContext';
 import { useDashboardFilter } from '../../lib/dashboardFilterUtils';
+import { LABELS } from '../../config/labels';
 
 const toNum = (v: any): number => {
   if (!v) return 0;
@@ -312,8 +313,8 @@ export default function MarketingDashboard() {
       {/* ===== HEADER ===== */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Marketing Performance Dashboard</h1>
-          <p className="text-slate-600 mb-2">Demand generation, funnel health, and revenue contribution metrics</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">{LABELS.pageTitles.marketing.title}</h1>
+          <p className="text-slate-600 mb-2">{LABELS.pageTitles.marketing.subtitle}</p>
           {selectedMonths.length > 0 && (
             <p className="text-sm text-slate-600">
               Viewing data for: <span className="font-medium">{getMonthDisplay}</span>
@@ -332,7 +333,7 @@ export default function MarketingDashboard() {
 
       {/* ===== HERO ROW — DEMAND GENERATION SNAPSHOT ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Demand Generation Snapshot</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">{LABELS.sections.demandGeneration}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           <HeroKPI
             title="Qualified Inbound Inquiries"
@@ -363,7 +364,7 @@ export default function MarketingDashboard() {
 
       {/* ===== QUALIFIED DEMAND TREND CHART ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Demand Funnel Trends</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">{LABELS.sections.funnelHealth}</h2>
         <div className="bg-white border border-slate-200 rounded-lg p-6">
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={monthlyTrendData}>
@@ -394,7 +395,7 @@ export default function MarketingDashboard() {
 
       {/* ===== FUNNEL DISCIPLINE STRIP ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Funnel Discipline & Lead Quality</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">{LABELS.sections.funnelHealth} & Lead Quality</h2>
         <div className="bg-white border border-slate-200 rounded-lg p-5">
           <div className="flex flex-col md:flex-row gap-3">
             <FunnelStage
@@ -435,7 +436,7 @@ export default function MarketingDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Response Time SLA */}
         <div>
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Response Time SLA</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Response Time SLA ({LABELS.sections.performance})</h2>
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 flex items-center justify-center min-h-[280px]">
             <div className="text-center">
               <Gauge className="w-16 h-16 text-slate-400 mx-auto mb-3" />
@@ -453,7 +454,7 @@ export default function MarketingDashboard() {
 
         {/* Sales & BD Enablement Impact */}
         <div>
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Sales & BD Enablement Adoption</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Sales & BD Enablement Adoption ({LABELS.sections.performance})</h2>
           <div className="bg-white border border-slate-200 rounded-lg p-6">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -494,7 +495,7 @@ export default function MarketingDashboard() {
 
       {/* ===== RAG STATUS BAND ===== */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Performance Status</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">{LABELS.sections.performance} Status</h2>
         <RAGBand data={ragStatus} />
       </div>
 
