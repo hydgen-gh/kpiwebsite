@@ -205,8 +205,9 @@ function InsightsPanel({ insights }: InsightsPanelProps) {
 // ============================================================================
 
 export default function FinancialData() {
-  const { selectedMonths } = useKPI();
+  const { selectedMonths, marketingData, bdData } = useKPI();
   const { getMonthDisplay } = useDashboardFilter();
+  const hasData = marketingData.length > 0 || bdData.length > 0;
 
   const timestamp = new Date().toLocaleDateString('en-US', {
     month: 'short',
@@ -220,72 +221,56 @@ export default function FinancialData() {
   // Financial Data
   // ============================================================================
 
-  const cashBalance = 3540004;
-  const cashTarget = 1329907;
-  const operating_burn_ytd = 279441;
-  const operating_burn_target = 279441;
-  const runway_months = null; // In progress - depends on burn close
-  const runway_target = 24;
-  const working_capital_change = -60561;
-  const non_dilutive_funding = 0;
-  const non_dilutive_funding_target = 500000;
+  const cashBalance = hasData ? 3540004 : 0;
+  const cashTarget = hasData ? 1329907 : 0;
+  const operating_burn_ytd = hasData ? 279441 : 0;
+  const operating_burn_target = hasData ? 279441 : 0;
+  const runway_months = hasData ? null : null; // In progress - depends on burn close
+  const runway_target = hasData ? 24 : 0;
+  const working_capital_change = hasData ? -60561 : 0;
+  const non_dilutive_funding = hasData ? 0 : 0;
+  const non_dilutive_funding_target = hasData ? 500000 : 0;
 
   // Cash vs Target comparison data
-  const cashComparisonData = [
+  const cashComparisonData = hasData ? [
     { name: 'Target', value: cashTarget },
     { name: 'Actual', value: cashBalance },
-  ];
+  ] : [];
 
   // Burn trend data (monthly)
-  const burnTrendData = [
+  const burnTrendData = hasData ? [
     { month: 'Jan', burn: 92000, monthly: 92000 },
     { month: 'Feb', burn: 95000, monthly: 3000 },
     { month: 'Mar', burn: 92000, monthly: -3000 },
-  ];
+  ] : [];
 
   // Funding target progress
-  const fundingData = [
+  const fundingData = hasData ? [
     { name: 'Secured', value: non_dilutive_funding },
     { name: 'Remaining', value: non_dilutive_funding_target },
-  ];
+  ] : [];
 
   // Working capital visualization
-  const workingCapitalData = [
+  const workingCapitalData = hasData ? [
     { name: 'Working Capital', value: Math.abs(working_capital_change), fill: working_capital_change < 0 ? '#ef4444' : '#10b981' },
-  ];
+  ] : [];
 
   // RAG Status
   const ragStatus = {
-    onTrack: ['Cash balance vs target'],
-    inProgress: ['Operating burn', 'Runway calculation'],
-    gap: ['Non-dilutive funding'],
-    attention: ['Negative working capital movement – $60.5K outflow'],
+    onTrack: hasData ? ['Cash balance vs target'] : [],
+    inProgress: hasData ? ['Operating burn', 'Runway calculation'] : [],
+    gap: hasData ? ['Non-dilutive funding'] : [],
+    attention: hasData ? ['Negative working capital movement – $60.5K outflow'] : [],
   };
 
   // Insights
-  const insights = [
-    `Cash significantly exceeds quarterly target: $3.54M vs $1.33M (+166% achievement)`,
+  const insights = hasData ? [
+    `Cash significantly exceeds quarterly target: $${(cashBalance / 1000000).toFixed(2)}M vs $${(cashTarget / 1000000).toFixed(2)}M (+${(((cashBalance - cashTarget) / cashTarget) * 100).toFixed(0)}% achievement)`,
     `Operating burn closing in progress – runway recalculation pending completion`,
-    `Negative working capital movement of $60.5K this period – monitor closely`,
-    `No non-dilutive funding secured yet – $500K target remains at 0%`,
+    `Negative working capital movement of $${(Math.abs(working_capital_change) / 1000).toFixed(1)}K this period – monitor closely`,
+    `No non-dilutive funding secured yet – $${(non_dilutive_funding_target / 1000).toFixed(0)}K target remains at 0%`,
     `Strong liquidity position supports current operational needs with significant runway`,
-  ];
-
-  // Check if data exists
-  const { marketingData, bdData } = useKPI();
-  const hasData = marketingData.length > 0 || bdData.length > 0;
-  
-  if (!hasData) {
-    return (
-      <div>
-        <EmptyState
-          icon={<UploadIcon className="w-12 h-12" />}
-          title="No Data Yet"
-          description="Upload your Excel file with KPI data to see the Financial dashboard."
-        />
-      </div>
-    );
-  }
+  ] : [];
 
   return (
     <div className="space-y-6">

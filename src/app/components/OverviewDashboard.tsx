@@ -11,64 +11,47 @@ export default function OverviewDashboard() {
   const { getMonthDisplay, isCustomMode } = useDashboardFilter();
   const [showLegend, setShowLegend] = useState(true);
 
-  // Check if data exists - show empty state if not
-  const hasData = marketingData.length > 0 || bdData.length > 0;
-
-  if (!hasData) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Executive Overview</h1>
-          <p className="text-slate-600 mt-1">All KPIs at a glance</p>
-        </div>
-        <EmptyState
-          icon={<Upload className="w-12 h-12" />}
-          title="No Data Yet"
-          description="Upload your Excel file with KPI data to see the executive overview dashboard."
-        />
-      </div>
-    );
-  }
-
   // ========================================================================
   // STRATEGIC OUTCOMES (Enhanced Goal Tracking)
   // ========================================================================
+  const hasData = marketingData.length > 0 || bdData.length > 0;
+  
   const strategicOutcomes = [
     { 
       name: '20 MW Semi-Automated Line', 
-      current: 65, 
+      current: hasData ? 65 : 0, 
       target: 100, 
       icon: Zap,
       status: 'on-track',
       metric: 'Production readiness %',
-      delta: '+8%'
+      delta: hasData ? '+8%' : '-'
     },
     { 
       name: '250 kW Single Stack', 
-      current: 78, 
+      current: hasData ? 78 : 0, 
       target: 100, 
       icon: Target,
       status: 'on-track',
       metric: 'Platform maturity %',
-      delta: '+5%'
+      delta: hasData ? '+5%' : '-'
     },
     { 
       name: '$2.5M Revenue', 
-      current: 42, 
+      current: hasData ? 42 : 0, 
       target: 100, 
       icon: DollarSign,
       status: 'at-risk',
       metric: 'Pipeline coverage ratio',
-      delta: '-3%'
+      delta: hasData ? '-3%' : '-'
     },
     { 
       name: 'Market Expansion', 
-      current: 55, 
+      current: hasData ? 55 : 0, 
       target: 100, 
       icon: MapPin,
       status: 'in-progress',
       metric: '2 / 5 active regions',
-      delta: '+1'
+      delta: hasData ? '+1' : '-'
     },
   ];
 
@@ -78,38 +61,38 @@ export default function OverviewDashboard() {
   const performanceKPIs = [
     {
       title: 'Revenue vs Target',
-      value: '$2.1M',
+      value: hasData ? '$2.1M' : '-',
       target: '$2.5M',
       unit: '',
       status: 'at-risk',
-      delta: '-16%',
+      delta: hasData ? '-16%' : '-',
       icon: DollarSign,
     },
     {
       title: 'Cash Runway',
-      value: '14',
+      value: hasData ? '14' : '-',
       target: '18',
       unit: 'months',
       status: 'on-track',
-      delta: 'Stable',
+      delta: hasData ? 'Stable' : '-',
       icon: Fuel,
     },
     {
       title: 'Systems Delivered',
-      value: '3',
+      value: hasData ? '3' : '-',
       target: '5',
       unit: 'of Q4 plan',
       status: 'in-progress',
-      delta: '+1 pending',
+      delta: hasData ? '+1 pending' : '-',
       icon: Rocket,
     },
     {
       title: 'Qualified Pipeline',
-      value: '$8.2M',
+      value: hasData ? '$8.2M' : '-',
       target: '$10M',
       unit: 'ARR potential',
       status: 'on-track',
-      delta: '+$1.3M MoM',
+      delta: hasData ? '+$1.3M MoM' : '-',
       icon: Target,
     },
   ];
@@ -118,12 +101,12 @@ export default function OverviewDashboard() {
   // KPI HEALTH DATA (Enhanced with sorting)
   // ========================================================================
   const kpiHealthDataRaw = [
-    { department: 'Product', onTrack: 8, atRisk: 2, behind: 1, total: 11 },
-    { department: 'Sales', onTrack: 6, atRisk: 3, behind: 1, total: 10 },
-    { department: 'Operations', onTrack: 5, atRisk: 2, behind: 1, total: 8 },
-    { department: 'Marketing', onTrack: 7, atRisk: 0, behind: 0, total: 7 },
-    { department: 'R&D', onTrack: 4, atRisk: 2, behind: 0, total: 6 },
-    { department: 'Finance', onTrack: 5, atRisk: 1, behind: 0, total: 6 },
+    { department: 'Product', onTrack: hasData ? 8 : 0, atRisk: hasData ? 2 : 0, behind: hasData ? 1 : 0, total: hasData ? 11 : 0 },
+    { department: 'Sales', onTrack: hasData ? 6 : 0, atRisk: hasData ? 3 : 0, behind: hasData ? 1 : 0, total: hasData ? 10 : 0 },
+    { department: 'Operations', onTrack: hasData ? 5 : 0, atRisk: hasData ? 2 : 0, behind: hasData ? 1 : 0, total: hasData ? 8 : 0 },
+    { department: 'Marketing', onTrack: hasData ? 7 : 0, atRisk: 0, behind: 0, total: hasData ? 7 : 0 },
+    { department: 'R&D', onTrack: hasData ? 4 : 0, atRisk: hasData ? 2 : 0, behind: 0, total: hasData ? 6 : 0 },
+    { department: 'Finance', onTrack: hasData ? 5 : 0, atRisk: hasData ? 1 : 0, behind: 0, total: hasData ? 6 : 0 },
   ];
   
   // Sort by risk (highest risk first)
@@ -134,30 +117,30 @@ export default function OverviewDashboard() {
   });
 
   const kpiHealthStats = {
-    total: kpiHealthData.reduce((sum, d) => sum + d.total, 0),
-    onTrack: kpiHealthData.reduce((sum, d) => sum + d.onTrack, 0),
-    atRisk: kpiHealthData.reduce((sum, d) => sum + d.atRisk, 0),
-    behind: kpiHealthData.reduce((sum, d) => sum + d.behind, 0),
+    total: hasData ? kpiHealthData.reduce((sum, d) => sum + d.total, 0) : 0,
+    onTrack: hasData ? kpiHealthData.reduce((sum, d) => sum + d.onTrack, 0) : 0,
+    atRisk: hasData ? kpiHealthData.reduce((sum, d) => sum + d.atRisk, 0) : 0,
+    behind: hasData ? kpiHealthData.reduce((sum, d) => sum + d.behind, 0) : 0,
   };
 
   // ========================================================================
   // CAPITAL DEPLOYMENT (Enhanced)
   // ========================================================================
-  const fundAllocationData = [
+  const fundAllocationData = hasData ? [
     { name: 'Assembly Line CAPEX', value: 1500000, percentage: 25 },
     { name: 'Product R&D and Patents', value: 1500000, percentage: 25 },
     { name: 'Sales and Marketing', value: 900000, percentage: 15 },
     { name: 'Product Testing and Certification', value: 600000, percentage: 10 },
     { name: 'G&A', value: 700000, percentage: 11.7 },
     { name: 'Working Capital', value: 800000, percentage: 13.3 },
-  ];
+  ] : [];
 
   const capitalMetrics = {
     totalBudget: 6000000,
-    spent: 4200000,
-    remaining: 1800000,
-    burnRate: 450000, // per month
-    runwayMonths: 14,
+    spent: hasData ? 4200000 : 0,
+    remaining: hasData ? 1800000 : 6000000,
+    burnRate: hasData ? 450000 : 0, // per month
+    runwayMonths: hasData ? 14 : 0,
   };
 
   // ========================================================================

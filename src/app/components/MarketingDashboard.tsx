@@ -212,6 +212,7 @@ export default function MarketingDashboard() {
   const { marketingData, selectedMonths } = useKPI();
   const { getMonthDisplay } = useDashboardFilter();
   const quarter = getQuarterFromMonths(selectedMonths);
+  const hasData = marketingData.length > 0;
 
   const timestamp = new Date().toLocaleDateString('en-US', {
     month: 'short',
@@ -235,27 +236,27 @@ export default function MarketingDashboard() {
     return toNum(d.q4_target) > 0;
   }).length;
 
-  const totalActual = marketingData.reduce((sum, d) => {
+  const totalActual = hasData ? marketingData.reduce((sum, d) => {
     if (quarter === 'Q3') return sum + toNum(d.q3_actual);
     return sum + toNum(d.q4_jan_actual) + toNum(d.q4_feb_actual) + toNum(d.q4_mar_actual);
-  }, 0);
+  }, 0) : 0;
 
-  const totalTarget = marketingData.reduce((sum, d) => {
+  const totalTarget = hasData ? marketingData.reduce((sum, d) => {
     if (quarter === 'Q3') return sum + toNum(d.q3_target);
     return sum + toNum(d.q4_target);
-  }, 0);
+  }, 0) : 0;
 
   // Hero KPI metrics
-  const qualifiedInboundAchievement = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
-  const icpPercentageArchievement = 50; // baseline / placeholder
-  const pipelineContribution = totalActual * 0.35; // Estimated $M contribution
+  const qualifiedInboundAchievement = hasData && totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
+  const icpPercentageArchievement = hasData ? 50 : 0; // baseline / placeholder
+  const pipelineContribution = hasData ? totalActual * 0.35 : 0; // Estimated $M contribution
 
   // Funnel metrics
-  const mqlToSqlConversion = qualifiedInboundAchievement > 60 ? 25 : 0;
-  const salesAcceptance = qualifiedInboundAchievement > 70 ? 30 : 0;
+  const mqlToSqlConversion = hasData && qualifiedInboundAchievement > 60 ? 25 : 0;
+  const salesAcceptance = hasData && qualifiedInboundAchievement > 70 ? 30 : 0;
 
   // Build monthly trend data (Jan, Feb, Mar)
-  const monthlyTrendData = [
+  const monthlyTrendData = hasData ? [
     {
       month: 'Jan',
       inbound: toNum(marketingData[0]?.q4_jan_actual || 0),
@@ -271,53 +272,40 @@ export default function MarketingDashboard() {
       inbound: toNum(marketingData[0]?.q4_mar_actual || 0),
       sal: toNum(marketingData[0]?.q4_mar_actual || 0) * 0.4,
     },
-  ];
+  ] : [];
 
   // Enablement adoption data
-  const enablementData = [
+  const enablementData = hasData ? [
     { name: 'Using Assets', value: 80 },
     { name: 'Not Using', value: 20 },
-  ];
+  ] : [];
 
   // RAG Status calculation
   const ragStatus = {
     behind: [
-      qualifiedInboundAchievement < 60 ? 'Inbound volume vs target' : null,
-      icpPercentageArchievement < 60 ? 'ICP %' : null,
-      salesAcceptance < 25 ? 'Sales acceptance' : null,
-      mqlToSqlConversion < 25 ? 'MQL → SQL conversion' : null,
+      hasData && qualifiedInboundAchievement < 60 ? 'Inbound volume vs target' : null,
+      hasData && icpPercentageArchievement < 60 ? 'ICP %' : null,
+      hasData && salesAcceptance < 25 ? 'Sales acceptance' : null,
+      hasData && mqlToSqlConversion < 25 ? 'MQL → SQL conversion' : null,
     ].filter(Boolean) as string[],
-    atRisk: [
+    atRisk: hasData ? [
       'Response time tracking not defined',
       'Lead quality not converting to SQL',
-    ],
-    onTrack: [
+    ] : [],
+    onTrack: hasData ? [
       'Marketing-sourced pipeline',
       'Enablement adoption (Q3: 100%)',
-    ],
+    ] : [],
   };
 
   // Insights
-  const insights = [
+  const insights = hasData ? [
     `Inbound volume: ${totalActual.toFixed(0)} vs target ${totalTarget.toFixed(0)} (${qualifiedInboundAchievement.toFixed(0)}%)`,
     `Pipeline contribution: $${(pipelineContribution / 1000).toFixed(1)}M from marketing-sourced leads`,
     'MQL→SQL conversion is declining - lead quality concerns',
     'No response-time SLA tracking – process gap to address',
     `ICP alignment at ${icpPercentageArchievement.toFixed(0)}% - room for improvement`,
-  ];
-
-  // Check if data exists
-  if (!marketingData || marketingData.length === 0) {
-    return (
-      <div>
-        <EmptyState
-          icon={<UploadIcon className="w-12 h-12" />}
-          title="No Data Yet"
-          description="Upload your Excel file with KPI data to see the Marketing dashboard."
-        />
-      </div>
-    );
-  }
+  ] : [];
 
   return (
     <div className="space-y-6">

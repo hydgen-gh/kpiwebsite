@@ -206,20 +206,24 @@ export default function RnD() {
   // ============================================================================
   // Data: Technology Risk Reduction (Composite KPI) — 3 Subsystems
   // ============================================================================
+  const { marketingData, bdData } = useKPI();
+  const hasData = marketingData.length > 0 || bdData.length > 0;
+
   const technologyProgressData = {
-    catalyst: { current: 10, target: 10, label: 'Catalyst' },
-    membrane: { current: 15, target: 30, label: 'Membrane' },
-    mea: { current: 30, target: 30, label: 'MEA' },
+    catalyst: { current: hasData ? 10 : 0, target: hasData ? 10 : 0, label: 'Catalyst' },
+    membrane: { current: hasData ? 15 : 0, target: hasData ? 30 : 0, label: 'Membrane' },
+    mea: { current: hasData ? 30 : 0, target: hasData ? 30 : 0, label: 'MEA' },
   };
 
   // Composite calculation: average progress toward targets
-  const catalystProgress = (technologyProgressData.catalyst.current / technologyProgressData.catalyst.target) * 100;
-  const membraneProgress = (technologyProgressData.membrane.current / technologyProgressData.membrane.target) * 100;
-  const meaProgress = (technologyProgressData.mea.current / technologyProgressData.mea.target) * 100;
-  const riskReductionIndex = Math.round((catalystProgress + membraneProgress + meaProgress) / 3);
+  const catalystProgress = hasData ? (technologyProgressData.catalyst.current / technologyProgressData.catalyst.target) * 100 : 0;
+  const membraneProgress = hasData ? (technologyProgressData.membrane.current / technologyProgressData.membrane.target) * 100 : 0;
+  const meaProgress = hasData ? (technologyProgressData.mea.current / technologyProgressData.mea.target) * 100 : 0;
+  const riskReductionIndex = hasData ? Math.round((catalystProgress + membraneProgress + meaProgress) / 3) : 0;
 
   // Risk reduction status
   const getRiskStatus = (): 'on-track' | 'at-risk' | 'blocked' => {
+    if (!hasData) return 'on-track';
     if (membraneProgress < 50) return 'at-risk';
     if (membraneProgress === 50 && membraneProgress > 40) return 'at-risk';
     return 'on-track';
@@ -229,28 +233,28 @@ export default function RnD() {
   // Data: Patent Families & IP Filings
   // ============================================================================
   const patentData = {
-    families: 4,
-    familiesTarget: 4,
-    filings: 9,
-    filingsTarget: 13,
+    families: hasData ? 4 : 0,
+    familiesTarget: hasData ? 4 : 0,
+    filings: hasData ? 9 : 0,
+    filingsTarget: hasData ? 13 : 0,
   };
 
-  const filingAchievement = (patentData.filings / patentData.filingsTarget) * 100;
+  const filingAchievement = hasData && patentData.filingsTarget > 0 ? (patentData.filings / patentData.filingsTarget) * 100 : 0;
 
   // ============================================================================
   // Data: Grant Milestone Progress — Tranche 3 (Blocked)
   // ============================================================================
   const grantData = {
-    tranche3Progress: 0,
-    tranche3Target: 100,
+    tranche3Progress: hasData ? 0 : 0,
+    tranche3Target: hasData ? 100 : 0,
     status: 'blocked' as const,
-    reason: 'Space constraint',
+    reason: hasData ? 'Space constraint' : '-',
   };
 
   // ============================================================================
   // Data: Technology Subsystem Progress Chart (for full-width bar chart)
   // ============================================================================
-  const subsystemProgressChartData = [
+  const subsystemProgressChartData = hasData ? [
     {
       name: 'Catalyst',
       current: technologyProgressData.catalyst.current,
@@ -269,49 +273,49 @@ export default function RnD() {
       target: technologyProgressData.mea.target,
       status: 'on-track' as const,
     },
-  ];
+  ] : [];
 
   // ============================================================================
   // Data: Patent Filing Progress — Delta Bar (Q3 → Q4 → Current)
   // ============================================================================
-  const patentFilingTrendData = [
+  const patentFilingTrendData = hasData ? [
     { quarter: 'Q3', filings: 13, status: 'historical' },
     { quarter: 'Q4 Target', filings: 13, status: 'planned' },
     { quarter: 'Current', filings: 9, status: 'current', label: 'Drafting in progress' },
-  ];
+  ] : [];
 
   // ============================================================================
   // Data: New IP Milestone Tracker (Steps: Drafting → Filing → PCT)
   // ============================================================================
-  const ipMilestoneSteps = [
+  const ipMilestoneSteps = hasData ? [
     { step: 'Drafting', status: 'in-progress' as const },
     { step: 'Filing', status: 'not-started' as const },
     { step: 'PCT', status: 'not-started' as const },
-  ];
+  ] : [];
 
   // ============================================================================
   // Data: Grant Utilization Timeline (Tranche 2 vs Tranche 3)
   // ============================================================================
-  const grantUtilizationData = [
+  const grantUtilizationData = hasData ? [
     { tranche: 'Tranche 2', progress: 100, status: 'on-track' as const },
     { tranche: 'Tranche 3', progress: 0, status: 'blocked' as const, reason: 'Space constraint' },
-  ];
+  ] : [];
 
   // ============================================================================
   // Data: Future Programs (Option Value Creation)
   // ============================================================================
-  const futurePrograms = [
+  const futurePrograms = hasData ? [
     { name: 'RFC', status: 'active' as const, type: 'MEA development' },
     { name: 'RAFC', status: 'on-hold' as const },
-  ];
+  ] : [];
 
-  const activeProgramsCount = futurePrograms.filter((p) => p.status === 'active').length;
-  const activeProgramsTarget = 2;
+  const activeProgramsCount = hasData ? futurePrograms.filter((p) => p.status === 'active').length : 0;
+  const activeProgramsTarget = hasData ? 2 : 0;
 
   // ============================================================================
   // Data: RAG Status Band
   // ============================================================================
-  const ragStatus = [
+  const ragStatus = hasData ? [
     {
       category: '🟢 On Track',
       items: [
@@ -335,17 +339,17 @@ export default function RnD() {
       category: '⚪ Strategic Gap',
       items: [{ label: 'Future program expansion', status: 'strategic-gap' as const }],
     },
-  ];
+  ] : [];
 
   // ============================================================================
   // Data: Key Insights
   // ============================================================================
-  const insights = [
+  const insights = hasData ? [
     'Core stack risk reduction progressing unevenly — Membrane subsystem at 50% of target (15% vs 30%), creating bottleneck.',
     'Strong patent family foundation (4/4 families stable) but filing count below target (9 vs 13 planned). Drafting new applications.',
     'Grant Tranche 3 execution blocked by infrastructure constraint. Space limitation prevents milestone advancement.',
     'Limited future program capacity — Only 1 active program (RFC). Strategic priority: RAFC activation pending infrastructure resolution.',
-  ];
+  ] : [];
 
   // ============================================================================
   // Derived Metrics
@@ -354,21 +358,6 @@ export default function RnD() {
   const ipStrengthScore = Math.round((patentData.filings / patentData.filingsTarget) * 100);
   const avgMilestoneCompletion = Math.round((riskReductionIndex + ipStrengthScore) / 2);
 
-  // Check if data exists
-  const { marketingData, bdData } = useKPI();
-  const hasData = marketingData.length > 0 || bdData.length > 0;
-  
-  if (!hasData) {
-    return (
-      <div>
-        <EmptyState
-          icon={<UploadIcon className="w-12 h-12" />}
-          title="No Data Yet"
-          description="Upload your Excel file with KPI data to see the R&D dashboard."
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

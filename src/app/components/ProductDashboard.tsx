@@ -153,8 +153,9 @@ const renderTooltip = ({ active, payload }: { active?: boolean; payload?: any[] 
 // MAIN COMPONENT
 // ============================================================================
 export default function ProductDashboard() {
-  const { selectedMonths } = useKPI();
+  const { selectedMonths, marketingData, bdData } = useKPI();
   const { getMonthDisplay, isCustomMode } = useDashboardFilter();
+  const hasData = marketingData.length > 0 || bdData.length > 0;
   const [primaryView, setPrimaryView] = useState<'PEM' | 'AEM'>('PEM');
   const [secondaryView, setSecondaryView] = useState<'performance' | 'delivery'>('performance');
   const [pemStackSize, setPemStackSize] = useState<'5kW' | '25kW' | '250kW'>('25kW');
@@ -166,52 +167,52 @@ export default function ProductDashboard() {
 
   // PEM 5kW - Development/Validation System
   const pem5kwData = {
-    stackEfficiency: { current: 38, target: 45, unit: 'kWh/kg' },
-    voltageEfficiency: { current: 88, target: 92, unit: '%' },
-    degradation: { current: 0.2, target: 0.8, unit: '%', status: 'on-track' as const, subtext: '50 hrs test' },
-    hydrogenPurity: { current: 99.99, target: 99.98, unit: '%', status: 'on-track' as const },
-    operatingPressure: 'Not monitored at this scale',
-    manufacturingNote: 'Pilot build state',
-    performanceRadarData: [
+    stackEfficiency: { current: hasData ? 38 : 0, target: hasData ? 45 : 0, unit: 'kWh/kg' },
+    voltageEfficiency: { current: hasData ? 88 : 0, target: hasData ? 92 : 0, unit: '%' },
+    degradation: { current: hasData ? 0.2 : 0, target: hasData ? 0.8 : 0, unit: '%', status: 'on-track' as const, subtext: hasData ? '50 hrs test' : '-' },
+    hydrogenPurity: { current: hasData ? 99.99 : 0, target: hasData ? 99.98 : 0, unit: '%', status: 'on-track' as const },
+    operatingPressure: hasData ? 'Not monitored at this scale' : '-',
+    manufacturingNote: hasData ? 'Pilot build state' : '-',
+    performanceRadarData: hasData ? [
       { metric: 'Efficiency', target: 45, actual: 38 },
       { metric: 'Voltage Eff.', target: 92, actual: 88 },
       { metric: 'Degradation', target: 0.8, actual: 0.2 },
       { metric: 'Purity', target: 99.98, actual: 99.99 },
-    ],
+    ] : [],
   };
 
   // PEM 25kW - Primary Execution (Commercial Scale)
   const pem25kwData = {
-    stackEfficiency: { current: 42, target: 48, unit: 'kWh/kg' },
-    degradation: { current: 0, target: 0.5, unit: '%', status: 'on-track' as const },
-    hydrogenPurity: { current: 99.999, target: 99.99, unit: '%', status: 'exceeded' as const },
-    operatingPressure: { current: 15, target: 10, unit: 'bar', status: 'on-track' as const },
-    performanceRadarData: [
+    stackEfficiency: { current: hasData ? 42 : 0, target: hasData ? 48 : 0, unit: 'kWh/kg' },
+    degradation: { current: hasData ? 0 : 0, target: hasData ? 0.5 : 0, unit: '%', status: 'on-track' as const },
+    hydrogenPurity: { current: hasData ? 99.999 : 0, target: hasData ? 99.99 : 0, unit: '%', status: 'exceeded' as const },
+    operatingPressure: { current: hasData ? 15 : 0, target: hasData ? 10 : 0, unit: 'bar', status: 'on-track' as const },
+    performanceRadarData: hasData ? [
       { metric: 'Efficiency', target: 48, actual: 42 },
       { metric: 'Voltage Eff.', target: 95, actual: 91 },
       { metric: 'Degradation', target: 0.5, actual: 0 },
       { metric: 'Purity', target: 99.99, actual: 99.999 },
       { metric: 'Pressure', target: 10, actual: 15 },
-    ],
-    manufacturingRamp: { built: 5, target: 11 },
-    manufacturingYield: 100,
-    costPerKw: 'Tracking in progress',
-    deliveryTrendData: [
+    ] : [],
+    manufacturingRamp: { built: hasData ? 5 : 0, target: hasData ? 11 : 0 },
+    manufacturingYield: hasData ? 100 : 0,
+    costPerKw: hasData ? 'Tracking in progress' : '-',
+    deliveryTrendData: hasData ? [
       { month: 'Jan', target: 1, actual: 0 },
       { month: 'Feb', target: 1, actual: 1 },
       { month: 'Mar', target: 2, actual: 2 },
       { month: 'Apr', target: 2, actual: 1 },
-    ],
+    ] : [],
   };
 
   // PEM 250kW - Planned Platform (No Performance Data)
   const pem250kwData = {
-    platformStatus: 'Planned / In Development',
-    platformReadiness: [
+    platformStatus: hasData ? 'Planned / In Development' : '-',
+    platformReadiness: hasData ? [
       { name: 'Architecture freeze', progress: 100, status: 'on-track' as const },
       { name: 'BOM cost model', progress: 70, status: 'at-risk' as const },
       { name: 'Manufacturing process readiness', progress: 40, status: 'at-risk' as const },
-    ],
+    ] : [],
   };
 
   // Dynamic PEM data based on stack size
@@ -252,28 +253,28 @@ export default function ProductDashboard() {
 
   // AEM 5kW - Technology Feasibility
   const aem5kwData = {
-    stackEfficiency: { current: 65.75, target: 60, unit: 'kWh/kg', status: 'blocked' as const },
-    currentDensity: { current: 0.7, target: 0.8, unit: 'A/cm²', status: 'at-risk' as const },
-    operatingPressure: { current: 1, target: 5, unit: 'bar', status: 'blocked' as const },
-    costPerKw: { current: 1126, target: 1000, unit: '$' },
-    baselineTracker: [
+    stackEfficiency: { current: hasData ? 65.75 : 0, target: hasData ? 60 : 0, unit: 'kWh/kg', status: 'blocked' as const },
+    currentDensity: { current: hasData ? 0.7 : 0, target: hasData ? 0.8 : 0, unit: 'A/cm²', status: 'at-risk' as const },
+    operatingPressure: { current: hasData ? 1 : 0, target: hasData ? 5 : 0, unit: 'bar', status: 'blocked' as const },
+    costPerKw: { current: hasData ? 1126 : 0, target: hasData ? 1000 : 0, unit: '$' },
+    baselineTracker: hasData ? [
       { name: 'Degradation protocol', status: 'not-established' as const },
       { name: 'Purity baseline', status: 'not-established' as const },
       { name: 'Yield baseline', status: 'not-established' as const },
-    ],
+    ] : [],
   };
 
   // AEM 25kW - Scale-up Readiness
   const aem25kwData = {
-    stackEfficiency: { current: 62, target: 55, unit: 'kWh/kg', status: 'blocked' as const },
-    currentDensity: { current: 0.75, target: 0.9, unit: 'A/cm²', status: 'at-risk' as const },
-    operatingPressure: { current: 3, target: 8, unit: 'bar', status: 'blocked' as const },
-    costPerKw: { current: 950, target: 750, unit: '$' },
-    performanceRadarData: [
+    stackEfficiency: { current: hasData ? 62 : 0, target: hasData ? 55 : 0, unit: 'kWh/kg', status: 'blocked' as const },
+    currentDensity: { current: hasData ? 0.75 : 0, target: hasData ? 0.9 : 0, unit: 'A/cm²', status: 'at-risk' as const },
+    operatingPressure: { current: hasData ? 3 : 0, target: hasData ? 8 : 0, unit: 'bar', status: 'blocked' as const },
+    costPerKw: { current: hasData ? 950 : 0, target: hasData ? 750 : 0, unit: '$' },
+    performanceRadarData: hasData ? [
       { metric: 'Efficiency', target: 55, actual: 62 },
       { metric: 'Current Dens.', target: 0.9, actual: 0.75 },
       { metric: 'Pressure', target: 8, actual: 3 },
-    ],
+    ] : [],
   };
 
   const getCurrentAemData = () => {
@@ -307,21 +308,21 @@ export default function ProductDashboard() {
   // 🟠 DELIVERY & CUSTOMER OPS DATA
   // ========================================================================
   const deliveryData = {
-    systemsDelivered: { current: 1, target: 11, status: 'in-progress' as const },
-    onTimeDelivery: { current: 0, target: 90, status: 'blocked' as const },
-    firstTimeAcceptance: { current: 100, target: 100, status: 'on-track' as const },
-    cycleTime: { current: 60, target: 75, status: 'on-track' as const },
-    issuesPerSystem: 1,
-    criticalIssues: 1,
-    mttr: { current: 3, target: 5, unit: 'days', status: 'on-track' as const },
-    csat: 'Measurement not started',
-    deliveryTrendData: [
+    systemsDelivered: { current: hasData ? 1 : 0, target: hasData ? 11 : 0, status: 'in-progress' as const },
+    onTimeDelivery: { current: hasData ? 0 : 0, target: hasData ? 90 : 0, status: 'blocked' as const },
+    firstTimeAcceptance: { current: hasData ? 100 : 0, target: hasData ? 100 : 0, status: 'on-track' as const },
+    cycleTime: { current: hasData ? 60 : 0, target: hasData ? 75 : 0, status: 'on-track' as const },
+    issuesPerSystem: hasData ? 1 : 0,
+    criticalIssues: hasData ? 1 : 0,
+    mttr: { current: hasData ? 3 : 0, target: hasData ? 5 : 0, unit: 'days', status: 'on-track' as const },
+    csat: hasData ? 'Measurement not started' : '-',
+    deliveryTrendData: hasData ? [
       { month: 'Nov', target: 0, actual: 0 },
       { month: 'Dec', target: 1, actual: 0 },
       { month: 'Jan', target: 1, actual: 1 },
       { month: 'Feb', target: 1, actual: 0 },
       { month: 'Mar', target: 2, actual: 1 },
-    ],
+    ] : [],
   };
 
   const deliveryRag = [
@@ -854,24 +855,6 @@ export default function ProductDashboard() {
       </div>
     </div>
   );
-
-  // ========================================================================
-  // MAIN RENDER
-  // ========================================================================
-  const { marketingData, bdData } = useKPI();
-  const hasData = marketingData.length > 0 || bdData.length > 0;
-  
-  if (!hasData) {
-    return (
-      <div>
-        <EmptyState
-          icon={<UploadIcon className="w-12 h-12" />}
-          title="No Data Yet"
-          description="Upload your Excel file with KPI data to see the Product dashboard."
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
