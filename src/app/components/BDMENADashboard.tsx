@@ -107,7 +107,7 @@ export default function BDMENADashboard() {
                     stage.actual < stage.target * 0.5 ? 'bg-amber-100 text-amber-700' :
                     'bg-emerald-100 text-emerald-700'
                   }`}>
-                    {stage.actual === 0 ? 'No data' : stage.actual < stage.target ? `${Math.round((stage.actual / stage.target) * 100)}%` : '✓ Target'}
+                    {stage.actual === 0 ? 'No data' : stage.actual < stage.target ? `${Math.round((stage.actual / stage.target) * 100)}%` : 'Target'}
                   </span>
                   {idx > 0 && <span className="text-xs text-slate-600">{conversionRate}% conv.</span>}
                 </div>

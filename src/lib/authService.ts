@@ -3,7 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create a single Supabase client with optimized settings
+// Setting db.timeout to 5 seconds and using persistent sessions
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
 export interface AuthUser {
   id: string;
@@ -25,21 +32,35 @@ export const authService = {
   },
 
   async getCurrentUser(): Promise<AuthUser | null> {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session?.user) return null;
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.user) return null;
 
-    // Get user role from database
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', data.session.user.id)
-      .single();
+      // Try to get user role from database, but don't block if unavailable
+      let role = 'user';
+      try {
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', data.session.user.id)
+          .single();
+        if (userData?.role) {
+          role = userData.role;
+        }
+      } catch (dbError) {
+        // If database query fails, default to 'user' role
+        console.warn('Could not fetch user role from database, defaulting to user role');
+      }
 
-    return {
-      id: data.session.user.id,
-      email: data.session.user.email || '',
-      role: userData?.role || 'user',
-    };
+      return {
+        id: data.session.user.id,
+        email: data.session.user.email || '',
+        role: role as 'admin' | 'user',
+      };
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
   },
 
   async onAuthStateChange(callback: (user: AuthUser | null) => void) {

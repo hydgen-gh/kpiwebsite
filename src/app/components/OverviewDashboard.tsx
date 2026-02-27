@@ -193,7 +193,7 @@ export default function OverviewDashboard() {
             <div className="flex justify-between items-center mb-2">
               <span className="text-2xl font-bold text-slate-900">{outcome.current}%</span>
               <span className="text-xs font-semibold px-2 py-1 rounded" style={{ backgroundColor: statusColors[outcome.status as keyof typeof statusColors] + '20', color: statusColors[outcome.status as keyof typeof statusColors] }}>
-                {outcome.status === 'on-track' ? '✓ On Track' : outcome.status === 'at-risk' ? '⚠ At Risk' : '⏳ In Progress'}
+                {outcome.status === 'on-track' ? 'On Track' : outcome.status === 'at-risk' ? 'At Risk' : 'In Progress'}
               </span>
             </div>
             <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -255,11 +255,11 @@ export default function OverviewDashboard() {
         </div>
         <div>
           <p className="text-2xl font-bold text-emerald-600">{kpiHealthStats.onTrack}</p>
-          <p className="text-xs text-slate-600">On Track ✓</p>
+          <p className="text-xs text-slate-600">On Track</p>
         </div>
         <div>
           <p className="text-2xl font-bold text-amber-600">{kpiHealthStats.atRisk}</p>
-          <p className="text-xs text-slate-600">At Risk ⚠</p>
+          <p className="text-xs text-slate-600">At Risk</p>
         </div>
         <div>
           <p className="text-2xl font-bold text-red-600">{kpiHealthStats.behind}</p>

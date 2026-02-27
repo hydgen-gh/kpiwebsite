@@ -84,13 +84,13 @@ export function FilterInfoAlert() {
       <div className="text-xs text-cyan-700">
         {isCustomMode && (
           <>
-            <p className="font-medium mb-1">📅 Custom Period Selected</p>
+            <p className="font-medium mb-1">Custom Period Selected</p>
             <p>You've selected {selectedMonths.length} specific months. Dashboards will show data only for these months.</p>
           </>
         )}
         {isFullYear && (
           <>
-            <p className="font-medium mb-1">📅 Full Year View</p>
+            <p className="font-medium mb-1">Full Year View</p>
             <p>All 12 months of FY 2025 are included. Viewing data across the entire financial year.</p>
           </>
         )}

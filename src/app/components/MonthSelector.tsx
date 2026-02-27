@@ -102,10 +102,7 @@ export default function MonthSelector() {
         <ChevronDown className="absolute right-1.5 top-1/2 transform -translate-y-1/2 w-3 h-3 pointer-events-none text-slate-600" />
       </div>
 
-      {/* Financial Year Display */}
-      <div className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-lg whitespace-nowrap">
-        {financialYear}
-      </div>
+
 
       {/* Quarter Quick-Select Buttons */}
       <div className="flex gap-2 items-center">
@@ -139,7 +136,7 @@ export default function MonthSelector() {
           }`}
           title="Pick individual months"
         >
-          📅 Months
+          Months
           <ChevronDown className={`w-3 h-3 transition-transform ${showMonthPicker ? 'rotate-180' : ''}`} />
         </button>
 

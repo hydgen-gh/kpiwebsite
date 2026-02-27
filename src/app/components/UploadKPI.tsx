@@ -524,7 +524,7 @@ export default function UploadKPI() {
 
           {/* Example */}
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm font-medium text-green-900 mb-2">✓ Example Structure</p>
+            <p className="text-sm font-medium text-green-900 mb-2">Example Structure</p>
             <p className="text-xs text-green-700 mb-2">
               File: "KPI_Data_2025.xlsx" with sheets: Product, Sales, Marketing, RnD, Finance
             </p>

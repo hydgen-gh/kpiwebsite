@@ -68,11 +68,11 @@ function HeroKPI({
   };
 
   const statusBadges: Record<string, { bg: string; text: string; label: string }> = {
-    'on-track': { bg: 'bg-green-100', text: 'text-green-800', label: '✓ On Track' },
-    'at-risk': { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '⚠ At Risk' },
-    'blocked': { bg: 'bg-red-100', text: 'text-red-800', label: '🔴 Blocked' },
-    'in-progress': { bg: 'bg-slate-100', text: 'text-slate-800', label: '⏳ In Progress' },
-    'exceeded': { bg: 'bg-blue-100', text: 'text-blue-800', label: '✨ Exceeded' },
+    'on-track': { bg: 'bg-green-100', text: 'text-green-800', label: 'On Track' },
+    'at-risk': { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'At Risk' },
+    'blocked': { bg: 'bg-red-100', text: 'text-red-800', label: 'Blocked' },
+    'in-progress': { bg: 'bg-slate-100', text: 'text-slate-800', label: 'In Progress' },
+    'exceeded': { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Exceeded' },
   };
 
   const style = statusStyles[status];
@@ -150,9 +150,9 @@ function RAGBand({ data }: RAGBandProps) {
 
   const statusIcon = (status: string) => {
     const icons: Record<string, string> = {
-      'on-track': '✓',
-      'at-risk': '⚠',
-      'blocked': '🔴',
+      'on-track': 'OK',
+      'at-risk': 'At Risk',
+      'blocked': 'X',
       'strategic-gap': '▪',
     };
     return icons[status] || '•';
@@ -333,7 +333,7 @@ export default function RnD() {
       ],
     },
     {
-      category: '🔴 Blocked',
+      category: 'Blocked',
       items: [{ label: 'Grant Tranche 3 (space)', status: 'blocked' as const }],
     },
     {
@@ -431,7 +431,7 @@ export default function RnD() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-slate-900">{item.name}</span>
                   <span className="text-xs text-slate-600">
-                    {item.current}% / {item.target}% {item.status === 'on-track' ? '✓' : '⚠'}
+                    {item.current}% / {item.target}%
                   </span>
                 </div>
                 <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
@@ -482,7 +482,7 @@ export default function RnD() {
             </ResponsiveContainer>
 
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
-              <strong>⚠ Filing Drop:</strong> Q3 had 13 filings, current at 9. New applications in drafting phase.
+              <strong>Filing Drop:</strong> Q3 had 13 filings, current at 9. New applications in drafting phase.
             </div>
           </div>
         </div>
@@ -542,7 +542,7 @@ export default function RnD() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-slate-900">{item.tranche}</span>
                 <span className={`text-xs font-bold ${item.status === 'on-track' ? 'text-green-700' : 'text-red-700'}`}>
-                  {item.status === 'on-track' ? '✓ 100% Achieved' : `🔴 ${item.progress}% — ${item.reason}`}
+                  {item.status === 'on-track' ? '100% Achieved' : `${item.progress}% — ${item.reason}`}
                 </span>
               </div>
               <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden">
@@ -578,7 +578,7 @@ export default function RnD() {
 
             const statusLabel =
               program.status === 'active'
-                ? '✓ Active'
+                ? 'Active'
                 : program.status === 'on-hold'
                   ? '⏸ On Hold'
                   : '○ Not Started';

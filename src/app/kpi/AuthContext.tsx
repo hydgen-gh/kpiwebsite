@@ -19,33 +19,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check auth state on mount
   useEffect(() => {
     let subscription: any;
+    let loadingTimeout: NodeJS.Timeout;
 
-    const checkAuth = async () => {
+    const initAuth = async () => {
+      // Set a timeout for loading state (max 3 seconds)
+      loadingTimeout = setTimeout(() => {
+        setLoading(false);
+      }, 3000);
+
       try {
+        // Get the current session from cache first (fast)
         const currentUser = await authService.getCurrentUser();
         setUser(currentUser);
+        clearTimeout(loadingTimeout);
+        setLoading(false);
       } catch (error) {
         console.error('Auth check error:', error);
         setUser(null);
-      } finally {
+        clearTimeout(loadingTimeout);
         setLoading(false);
+      }
+
+      // Setup listener for future auth changes
+      try {
+        subscription = await authService.onAuthStateChange((updatedUser) => {
+          setUser(updatedUser);
+        });
+      } catch (error) {
+        console.error('Auth listener setup error:', error);
       }
     };
 
-    const setupAuthListener = async () => {
-      subscription = await authService.onAuthStateChange((updatedUser) => {
-        setUser(updatedUser);
-        setLoading(false);
-      });
-    };
-
-    checkAuth();
-    setupAuthListener();
+    initAuth();
 
     return () => {
       if (subscription) {
         subscription.unsubscribe();
       }
+      clearTimeout(loadingTimeout);
     };
   }, []);
 
