@@ -19,33 +19,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check auth state on mount
   useEffect(() => {
     let subscription: any;
+    let isMounted = true;
 
-    const checkAuth = async () => {
+    const checkAuthWithTimeout = async () => {
+      // Maximum 5 seconds for auth check
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+      );
+
       try {
-        const currentUser = await authService.getCurrentUser();
-        setUser(currentUser);
+        const currentUser = await Promise.race([
+          authService.getCurrentUser(),
+          timeoutPromise,
+        ]);
+        if (isMounted) {
+          setUser(currentUser as AuthUser | null);
+        }
       } catch (error) {
         console.error('Auth check error:', error);
-        setUser(null);
+        if (isMounted) {
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     const setupAuthListener = async () => {
       try {
         subscription = await authService.onAuthStateChange((updatedUser) => {
-          setUser(updatedUser);
+          if (isMounted) {
+            setUser(updatedUser);
+          }
         });
       } catch (error) {
         console.error('Auth listener setup error:', error);
       }
     };
 
-    // Run both in parallel
-    Promise.all([checkAuth(), setupAuthListener()]).catch(console.error);
+    // Start both operations
+    checkAuthWithTimeout();
+    setupAuthListener();
 
     return () => {
+      isMounted = false;
       if (subscription) {
         subscription.unsubscribe();
       }
@@ -53,15 +72,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error, data } = await authService.signIn(email, password);
-    if (error) {
-      throw new Error(error.message || 'Login failed');
+    // Set a timeout for the entire signIn operation
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Login timeout - please try again')), 10000)
+    );
+
+    try {
+      const signInPromise = authService.signIn(email, password);
+      const { error, data } = await Promise.race([
+        signInPromise,
+        timeoutPromise,
+      ]) as any;
+
+      if (error) {
+        throw new Error(error.message || 'Login failed');
+      }
+      if (!data.session) {
+        throw new Error('No session created after login');
+      }
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    } catch (err: any) {
+      throw new Error(err.message || 'Login failed');
     }
-    if (!data.session) {
-      throw new Error('No session created after login');
-    }
-    const currentUser = await authService.getCurrentUser();
-    setUser(currentUser);
   };
 
   const signUp = async (email: string, password: string) => {

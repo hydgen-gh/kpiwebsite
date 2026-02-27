@@ -36,19 +36,29 @@ export const authService = {
       const { data } = await supabase.auth.getSession();
       if (!data.session?.user) return null;
 
-      // Try to get user role from database, but don't block if unavailable
+      // Try to get user role from database, with a 3 second timeout
       let role = 'user';
       try {
-        const { data: userData, error } = await supabase
+        const dbQueryPromise = supabase
           .from('users')
           .select('role')
           .eq('id', data.session.user.id)
           .single();
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('DB timeout')), 3000)
+        );
+
+        const { data: userData } = await Promise.race([
+          dbQueryPromise,
+          timeoutPromise,
+        ]) as any;
+
         if (userData?.role) {
           role = userData.role;
         }
       } catch (dbError) {
-        // If database query fails, default to 'user' role
+        // If database query fails or times out, default to 'user' role
         console.warn('Could not fetch user role from database, defaulting to user role');
       }
 
