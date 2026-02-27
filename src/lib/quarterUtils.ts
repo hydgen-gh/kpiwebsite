@@ -35,12 +35,25 @@ export const SHORT_MONTHS = [
   'Dec',
 ];
 
-// Quarter to Full Month Mapping (FY 2025)
-export const QUARTER_MONTH_MAP: Record<string, string[]> = {
-  Q4: ['January', 'February', 'March'],     // Q4 2024 -> Jan, Feb, Mar 2025
-  Q1: ['April', 'May', 'June'],             // Q1 -> Apr, May, Jun
-  Q2: ['July', 'August', 'September'],      // Q2 -> Jul, Aug, Sep
-  Q3: ['October', 'November', 'December'],  // Q3 -> Oct, Nov, Dec
+// Quarter to Full Month Mapping by Financial Year
+export const QUARTER_MONTH_MAP_BY_YEAR: Record<string, Record<string, string[]>> = {
+  'FY2025': {
+    Q4: ['January', 'February', 'March'],     // Q4 2024 -> Jan, Feb, Mar 2025
+  },
+  'FY2026': {
+    Q1: ['April', 'May', 'June'],             // Q1 -> Apr, May, Jun
+    Q2: ['July', 'August', 'September'],      // Q2 -> Jul, Aug, Sep
+    Q3: ['October', 'November', 'December'],  // Q3 -> Oct, Nov, Dec
+    Q4: ['January', 'February', 'March'],     // Q4 -> Jan, Feb, Mar 2026
+  },
+};
+
+// Default mapping for backward compatibility (FY2026)
+export const QUARTER_MONTH_MAP: Record<string, string[]> = QUARTER_MONTH_MAP_BY_YEAR['FY2026'];
+
+// Get quarter-month mapping for a specific year
+export const getQuarterMonthMapForYear = (year: string): Record<string, string[]> => {
+  return QUARTER_MONTH_MAP_BY_YEAR[year] || QUARTER_MONTH_MAP_BY_YEAR['FY2026'];
 };
 
 // Reverse mapping: Month to Quarter
@@ -50,6 +63,18 @@ Object.entries(QUARTER_MONTH_MAP).forEach(([quarter, months]) => {
     MONTH_QUARTER_MAP[month] = quarter;
   });
 });
+
+// Get month-quarter mapping for a specific year
+export const getMonthQuarterMapForYear = (year: string): Record<string, string> => {
+  const mapping: Record<string, string> = {};
+  const quarterMonths = getQuarterMonthMapForYear(year);
+  Object.entries(quarterMonths).forEach(([quarter, months]) => {
+    months.forEach((month) => {
+      mapping[month] = quarter;
+    });
+  });
+  return mapping;
+};
 
 /**
  * Get quarters for a set of selected months
@@ -87,11 +112,32 @@ export const getMonthsFromQuarters = (quarters: string[]): string[] => {
 };
 
 /**
+ * Get available financial years
+ * @returns Array of available years
+ */
+export const getAvailableFinancialYears = (): string[] => {
+  return ['FY2025', 'FY2026'];
+};
+
+/**
+ * Get available quarters for a specific year
+ * @param year The financial year (e.g., 'FY2025')
+ * @returns Array of available quarters for that year
+ */
+export const getAvailableQuartersForYear = (year: string): string[] => {
+  const mapping = getQuarterMonthMapForYear(year);
+  return Object.keys(mapping).sort((a, b) => {
+    const order: Record<string, number> = { Q4: 0, Q1: 1, Q2: 2, Q3: 3 };
+    return (order[a] || 999) - (order[b] || 999);
+  });
+};
+
+/**
  * Get display string for financial year
- * @returns 'FY 2025'
+ * @returns 'FY2026' (default current year)
  */
 export const getCurrentFinancialYear = (): string => {
-  return 'FY 2025';
+  return 'FY2026';
 };
 
 /**
@@ -123,8 +169,9 @@ export const getFullMonth = (shortMonth: string): string => {
 };
 
 /**
- * Get all possible quarters
+ * Get all possible quarters for current year (FY2026)
+ * @deprecated Use getAvailableQuartersForYear instead
  */
 export const getAllQuarters = (): string[] => {
-  return ['Q4', 'Q1', 'Q2', 'Q3'];
+  return getAvailableQuartersForYear('FY2026');
 };

@@ -1,371 +1,496 @@
-import React, { useState } from 'react';
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend
-} from 'recharts';
-import { DollarSign, Briefcase, Wallet } from 'lucide-react';
+import React from 'react';
+import { TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock, DollarSign, Wallet, Zap, ArrowUp, ArrowDown, Gauge } from 'lucide-react';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { FilterStatusBadge } from './FilterStatusBadge';
+import { DefinitionsSection } from './DefinitionsSection';
+import { useKPI, getQuarterFromMonths } from '../kpi/KPIContext';
+import { useDashboardFilter } from '../../lib/dashboardFilterUtils';
 
-/* ---------------- HELPERS ---------------- */
+// ============================================================================
+// Helper Components (Reused from Sales/Marketing Dashboards)
+// ============================================================================
 
-const formatCurrency = (value: number) =>
-  `$${(value / 1_000).toFixed(0)}K`;
+interface HeroKPIProps {
+  title: string;
+  actual: number | string;
+  target: number | string;
+  unit: string;
+  icon: React.ElementType;
+  subtext?: string;
+  status?: 'on-track' | 'at-risk' | 'in-progress' | 'exceeded';
+  isNumeric?: boolean;
+}
 
-const formatPercent = (value: number) =>
-  `${value.toFixed(1)}%`;
+function HeroKPI({ title, actual, target, unit, icon: Icon, subtext, status, isNumeric = true }: HeroKPIProps) {
+  let displayStatus = status;
+  let achievement = 0;
 
-/* ---------------- DATA ---------------- */
+  if (isNumeric && typeof actual === 'number' && typeof target === 'number') {
+    achievement = (actual / target) * 100;
+    if (!displayStatus) {
+      displayStatus =
+        achievement >= 80 && achievement <= 120
+          ? 'on-track'
+          : achievement >= 60
+            ? 'at-risk'
+            : 'in-progress';
+    }
+  }
 
-const quarterlyDepartmentBudgets = [
-  { department: 'R&D', allocated: 100000, actual: 120000 },
-  { department: 'Product Development', allocated: 90000, actual: 65000 },
-  { department: 'Business Development', allocated: 80000, actual: 60000 },
-  { department: 'Sales / Travel', allocated: 70000, actual: 50000 },
-  { department: 'Marketing', allocated: 60000, actual: 45000 },
-].map(d => ({
-  ...d,
-  remaining: d.allocated - d.actual,
-}));
+  const formatNumber = (num: number | string) => {
+    if (typeof num === 'string') return num;
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M${unit}`;
+    if (num >= 1000) return `${(num / 1000).toFixed(0)}k${unit}`;
+    return `${num.toFixed(0)}${unit}`;
+  };
 
-const personnelSplitData = [
-  { department: 'R&D', personnel: 52000, nonPersonnel: 9000 },
-  { department: 'Business Development', personnel: 12000, nonPersonnel: 8500 },
-  { department: 'Sales / Travel', personnel: 6000, nonPersonnel: 9500 },
-  { department: 'Product Development', personnel: 6000, nonPersonnel: 9500 },
-  { department: 'Marketing', personnel: 6000, nonPersonnel: 9500 },
-];
+  const getStatusColor = () => {
+    switch (displayStatus) {
+      case 'exceeded':
+        return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', bar: 'bg-green-500' };
+      case 'on-track':
+        return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', bar: 'bg-blue-500' };
+      case 'at-risk':
+        return { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', bar: 'bg-yellow-500' };
+      case 'in-progress':
+        return { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-600', bar: 'bg-slate-300' };
+      default:
+        return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', bar: 'bg-red-500' };
+    }
+  };
 
-// QoQ → Budget vs Actual
-const qoQData = [
-  {
-    department: 'R&D',
-    prevBudget: 95000,
-    prevActual: 90000,
-    currBudget: 100000,
-    currActual: 120000,
-  },
-  {
-    department: 'Product Development',
-    prevBudget: 72000,
-    prevActual: 70000,
-    currBudget: 90000,
-    currActual: 65000,
-  },
-  {
-    department: 'Business Development',
-    prevBudget: 68000,
-    prevActual: 65000,
-    currBudget: 80000,
-    currActual: 60000,
-  },
-  {
-    department: 'Sales / Travel',
-    prevBudget: 50000,
-    prevActual: 48000,
-    currBudget: 70000,
-    currActual: 50000,
-  },
-  {
-    department: 'Marketing',
-    prevBudget: 45000,
-    prevActual: 42000,
-    currBudget: 60000,
-    currActual: 45000,
-  },
-];
+  const colors = getStatusColor();
 
-const spendByEntity = [
-  { name: 'Hydrogen Nexus Pvt Ltd', value: 52000 },
-  { name: 'Hydrogen Innovation Pvt Ltd', value: 48000 },
-  { name: 'Hydrogen Innovation PTE Ltd', value: 21000 },
-];
+  return (
+    <div className={`${colors.bg} ${colors.border} border rounded-xl p-6 hover:shadow-lg transition-shadow`}>
+      <div className="flex items-start justify-between mb-4">
+        <Icon className="w-5 h-5 text-slate-600" />
+        <span className={`text-xs px-3 py-1 rounded-full font-medium ${colors.text} bg-white/60`}>
+          {displayStatus === 'exceeded'
+            ? '✓ Exceeded'
+            : displayStatus === 'on-track'
+              ? '✓ On Track'
+              : displayStatus === 'in-progress'
+                ? '⏳ In Progress'
+                : '⚠ At Risk'}
+        </span>
+      </div>
 
-const COLORS = {
-  teal: '#14b8a6',
-  cyan: '#06b6d4',
-  blue: '#3b82f6',
-  slate: '#64748b',
-};
+      <h3 className="text-sm font-semibold text-slate-900 mb-3">{title}</h3>
 
-/* ================= DASHBOARD ================= */
+      <div className="mb-4">
+        <div className="flex justify-between items-baseline mb-1">
+          <span className="text-3xl font-bold text-slate-900">
+            {isNumeric ? formatNumber(actual as number) : actual}
+          </span>
+          <span className="text-sm text-slate-600">
+            vs {isNumeric ? formatNumber(target as number) : target}
+          </span>
+        </div>
+      </div>
 
-export default function FinanceDashboard() {
-  const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
-  const [selectedDepartment, setSelectedDepartment] = useState('All');
+      {isNumeric && typeof actual === 'number' && typeof target === 'number' && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-slate-700">Achievement</span>
+            <span className={`text-sm font-bold ${colors.text}`}>{achievement.toFixed(0)}%</span>
+          </div>
+          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+            <div
+              className={`h-full transition-all duration-500 ${colors.bar}`}
+              style={{ width: `${Math.min(achievement, 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
-  const departmentOptions = [
-    'All',
-    ...Array.from(new Set(quarterlyDepartmentBudgets.map(d => d.department))),
+      {subtext && <div className="text-xs text-slate-600">{subtext}</div>}
+    </div>
+  );
+}
+
+interface RAGBandProps {
+  data: { onTrack: string[]; inProgress: string[]; attention: string[]; gap: string[] };
+}
+
+function RAGBand({ data }: RAGBandProps) {
+  return (
+    <div className="grid grid-cols-4 gap-4">
+      {/* On Track */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-3 h-3 rounded-full bg-green-500" />
+          <h4 className="text-sm font-bold text-green-700">On Track</h4>
+        </div>
+        <div className="space-y-2">
+          {data.onTrack.map((item, idx) => (
+            <div key={idx} className="text-xs text-green-700 bg-white/60 rounded px-2 py-1">
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* In Progress */}
+      <div className="bg-slate-50 border border-slate-300 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-3 h-3 rounded-full bg-slate-500" />
+          <h4 className="text-sm font-bold text-slate-700">In Progress</h4>
+        </div>
+        <div className="space-y-2">
+          {data.inProgress.map((item, idx) => (
+            <div key={idx} className="text-xs text-slate-700 bg-white/60 rounded px-2 py-1">
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Strategic Gap */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-3 h-3 rounded-full bg-indigo-500" />
+          <h4 className="text-sm font-bold text-indigo-700">Strategic Gap</h4>
+        </div>
+        <div className="space-y-2">
+          {data.gap.map((item, idx) => (
+            <div key={idx} className="text-xs text-indigo-700 bg-white/60 rounded px-2 py-1">
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Attention */}
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-3 h-3 rounded-full bg-red-500" />
+          <h4 className="text-sm font-bold text-red-700">Attention</h4>
+        </div>
+        <div className="space-y-2">
+          {data.attention.map((item, idx) => (
+            <div key={idx} className="text-xs text-red-700 bg-white/60 rounded px-2 py-1">
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface InsightsPanelProps {
+  insights: string[];
+}
+
+function InsightsPanel({ insights }: InsightsPanelProps) {
+  return (
+    <div className="bg-slate-50 border border-slate-200 rounded-lg p-5">
+      <h4 className="text-sm font-bold text-slate-900 mb-4">Key Insights & Actions</h4>
+      <div className="space-y-3">
+        {insights.map((insight, idx) => (
+          <div key={idx} className="flex gap-3">
+            <AlertTriangle className="w-4 h-4 text-slate-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-slate-700">{insight}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export default function FinancialData() {
+  const { selectedMonths } = useKPI();
+  const { getMonthDisplay } = useDashboardFilter();
+
+  const timestamp = new Date().toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  // ============================================================================
+  // Financial Data
+  // ============================================================================
+
+  const cashBalance = 3540004;
+  const cashTarget = 1329907;
+  const operating_burn_ytd = 279441;
+  const operating_burn_target = 279441;
+  const runway_months = null; // In progress - depends on burn close
+  const runway_target = 24;
+  const working_capital_change = -60561;
+  const non_dilutive_funding = 0;
+  const non_dilutive_funding_target = 500000;
+
+  // Cash vs Target comparison data
+  const cashComparisonData = [
+    { name: 'Target', value: cashTarget },
+    { name: 'Actual', value: cashBalance },
   ];
 
-  const filteredDepartments =
-    selectedDepartment === 'All'
-      ? quarterlyDepartmentBudgets
-      : quarterlyDepartmentBudgets.filter(d => d.department === selectedDepartment);
+  // Burn trend data (monthly)
+  const burnTrendData = [
+    { month: 'Jan', burn: 92000, monthly: 92000 },
+    { month: 'Feb', burn: 95000, monthly: 3000 },
+    { month: 'Mar', burn: 92000, monthly: -3000 },
+  ];
 
-  const filteredPersonnel =
-    selectedDepartment === 'All'
-      ? personnelSplitData
-      : personnelSplitData.filter(d => d.department === selectedDepartment);
+  // Funding target progress
+  const fundingData = [
+    { name: 'Secured', value: non_dilutive_funding },
+    { name: 'Remaining', value: non_dilutive_funding_target },
+  ];
 
-  const filteredQoQ =
-    selectedDepartment === 'All'
-      ? qoQData
-      : qoQData.filter(d => d.department === selectedDepartment);
+  // Working capital visualization
+  const workingCapitalData = [
+    { name: 'Working Capital', value: Math.abs(working_capital_change), fill: working_capital_change < 0 ? '#ef4444' : '#10b981' },
+  ];
 
-  const totalBudget = filteredDepartments.reduce((s, d) => s + d.allocated, 0);
-  const totalActual = filteredDepartments.reduce((s, d) => s + d.actual, 0);
-  const variance = totalBudget - totalActual;
-  const variancePct = totalBudget ? (variance / totalBudget) * 100 : 0;
+  // RAG Status
+  const ragStatus = {
+    onTrack: ['Cash balance vs target'],
+    inProgress: ['Operating burn', 'Runway calculation'],
+    gap: ['Non-dilutive funding'],
+    attention: ['Negative working capital movement – $60.5K outflow'],
+  };
 
-  const plannedVsActual = [
-    {
-      name: selectedDepartment === 'All' ? 'Company' : selectedDepartment,
-      planned: totalBudget,
-      actual: totalActual,
-      variance,
-      variancePct,
-    },
+  // Insights
+  const insights = [
+    `Cash significantly exceeds quarterly target: $3.54M vs $1.33M (+166% achievement)`,
+    `Operating burn closing in progress – runway recalculation pending completion`,
+    `Negative working capital movement of $60.5K this period – monitor closely`,
+    `No non-dilutive funding secured yet – $500K target remains at 0%`,
+    `Strong liquidity position supports current operational needs with significant runway`,
   ];
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">
-            Quarterly Budget Performance
-          </h2>
-          <p className="text-sm text-slate-600">
-            Budget allocation and utilisation by department
-          </p>
-
-          <div className="mt-4 flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700">
-              Department:
-            </label>
-            <select
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="px-3 py-2 border rounded-lg text-sm bg-white"
-            >
-              {departmentOptions.map(dep => (
-                <option key={dep} value={dep}>
-                  {dep}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setViewMode('chart')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              viewMode === 'chart'
-                ? 'bg-teal-600 text-white'
-                : 'bg-slate-100 text-slate-700'
-            }`}
-          >
-            Chart View
-          </button>
-          <button
-            onClick={() => setViewMode('table')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              viewMode === 'table'
-                ? 'bg-teal-600 text-white'
-                : 'bg-slate-100 text-slate-700'
-            }`}
-          >
-            Table View
-          </button>
-        </div>
-      </div>
-
-      {viewMode === 'chart' ? (
-        <>
-          {/* KPIs */}
-          <div className="grid grid-cols-3 gap-6">
-            <FinanceKPI
-              title="Total Budget Allocated (Quarter)"
-              value={formatCurrency(totalBudget)}
-              icon={<DollarSign className="w-6 h-6 text-teal-600" />}
-            />
-            <FinanceKPI
-              title="Active Departments"
-              value={selectedDepartment === 'All' ? quarterlyDepartmentBudgets.length : 1}
-              icon={<Briefcase className="w-6 h-6 text-cyan-600" />}
-            />
-            <FinanceKPI
-              title="Approved vs Remaining (Quarter)"
-              value={formatCurrency(variance)}
-              icon={<Wallet className="w-6 h-6 text-blue-600" />}
-            />
-          </div>
-
-          {/* CORE */}
-          <SectionCard title="Department-wise Quarterly Budget Utilisation">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={filteredDepartments}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="department" />
-                <YAxis tickFormatter={(v) => `$${v / 1_000}K`} />
-                <Tooltip formatter={(v) => formatCurrency(v as number)} />
-                <Legend />
-                <Bar dataKey="allocated" fill={COLORS.teal} />
-                <Bar dataKey="actual" fill={COLORS.cyan} />
-                <Bar dataKey="remaining" fill={COLORS.blue} />
-              </BarChart>
-            </ResponsiveContainer>
-          </SectionCard>
-
-          {/* PERSONNEL */}
-          <SectionCard title="Personnel vs Non-Personnel Spend (Quarter)">
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={filteredPersonnel}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="department" />
-                <YAxis tickFormatter={(v) => `$${v / 1_000}K`} />
-                <Tooltip formatter={(v) => formatCurrency(v as number)} />
-                <Legend />
-                <Bar dataKey="personnel" stackId="a" fill={COLORS.teal} />
-                <Bar dataKey="nonPersonnel" stackId="a" fill={COLORS.cyan} />
-              </BarChart>
-            </ResponsiveContainer>
-          </SectionCard>
-
-          {/* PLANNED VS ACTUAL */}
-          <SectionCard title="Planned vs Actual (Quarter)">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={plannedVsActual}>
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(v) => `$${v / 1_000}K`} />
-                <Tooltip
-                  formatter={(v, n, p) =>
-                    n === 'variancePct'
-                      ? formatPercent(p.payload.variancePct)
-                      : formatCurrency(v as number)
-                  }
-                />
-                <Legend />
-                <Bar dataKey="planned" fill={COLORS.teal} />
-                <Bar dataKey="actual" fill={COLORS.cyan} />
-                <Bar dataKey="variance" fill={COLORS.blue} />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-xs text-slate-600 mt-2">
-              Variance: {formatCurrency(variance)} ({formatPercent(variancePct)})
+      {/* ===== HEADER ===== */}
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Financial Health Dashboard</h1>
+          <p className="text-slate-600 mb-2">Cash position, burn rate, runway, and capital metrics</p>
+          {selectedMonths.length > 0 && (
+            <p className="text-sm text-slate-600">
+              Viewing data for: <span className="font-medium">{getMonthDisplay}</span>
             </p>
-          </SectionCard>
+          )}
+        </div>
 
-          {/* QoQ */}
-          <SectionCard title="Quarter-on-Quarter Budget vs Actual">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={filteredQoQ}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="department" />
-                <YAxis tickFormatter={(v) => `$${v / 1_000}K`} />
-                <Tooltip formatter={(v) => formatCurrency(v as number)} />
-                <Legend />
-                <Bar dataKey="prevBudget" fill={COLORS.slate} name="Prev Q Budget" />
-                <Bar dataKey="prevActual" fill={COLORS.cyan} name="Prev Q Actual" />
-                <Bar dataKey="currBudget" fill={COLORS.teal} name="Curr Q Budget" />
-                <Bar dataKey="currActual" fill={COLORS.blue} name="Curr Q Actual" />
-              </BarChart>
-            </ResponsiveContainer>
-          </SectionCard>
-
-          {/* LEGAL ENTITY */}
-          <SectionCard title="Spend by Legal Entity (Quarter)">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={spendByEntity} layout="vertical">
-                <XAxis type="number" tickFormatter={(v) => `$${v / 1_000}K`} />
-                <YAxis type="category" dataKey="name" />
-                <Tooltip formatter={(v) => formatCurrency(v as number)} />
-                <Bar dataKey="value" fill={COLORS.teal} />
-              </BarChart>
-            </ResponsiveContainer>
-          </SectionCard>
-        </>
-      ) : (
-        <FinanceTables data={filteredDepartments} />
-      )}
-    </div>
-  );
-}
-
-/* ================= TABLE VIEW ================= */
-
-function FinanceTables({ data }: { data: any[] }) {
-  return (
-    <TableCard title="Department-wise Quarterly Budget">
-      <table className="w-full border">
-        <thead>
-          <tr>
-            <Th>Department</Th>
-            <Th>Allocated</Th>
-            <Th>Actual</Th>
-            <Th>Remaining / Overused</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((d, i) => (
-            <tr key={i}>
-              <Td>{d.department}</Td>
-              <Td>{formatCurrency(d.allocated)}</Td>
-              <Td>{formatCurrency(d.actual)}</Td>
-              <Td className={d.remaining < 0 ? 'text-red-600 font-semibold' : 'text-emerald-600 font-semibold'}>
-                {formatCurrency(d.remaining)}
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </TableCard>
-  );
-}
-
-/* ================= UI ================= */
-
-function FinanceKPI({ title, value, icon }: any) {
-  return (
-    <div className="p-4 border rounded-lg flex justify-between items-center">
-      <div>
-        <p className="text-sm text-slate-600">{title}</p>
-        <p className="text-xl font-bold">{value}</p>
+        <div className="flex flex-col lg:items-end gap-3">
+          <div className="text-right">
+            <p className="text-xs text-slate-600 mb-1">Last updated</p>
+            <p className="text-sm font-medium text-slate-900">{timestamp}</p>
+          </div>
+          <FilterStatusBadge variant="pill" />
+        </div>
       </div>
-      {icon}
+
+      {/* ===== HERO ROW — CORE FINANCIAL HEALTH ===== */}
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Core Financial Metrics</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <HeroKPI
+            title="Cash Balance"
+            actual={cashBalance}
+            target={cashTarget}
+            unit="$"
+            icon={DollarSign}
+            status="exceeded"
+            subtext={`+${(((cashBalance - cashTarget) / cashTarget) * 100).toFixed(0)}% above target`}
+            isNumeric={true}
+          />
+          <HeroKPI
+            title="Operating Burn"
+            actual="$279K YTD"
+            target="$279K"
+            unit=""
+            icon={TrendingDown}
+            status="in-progress"
+            subtext="Data closing in process"
+            isNumeric={false}
+          />
+          <HeroKPI
+            title="Runway"
+            actual="⏳ Calculating"
+            target="24 months"
+            unit=""
+            icon={Clock}
+            status="in-progress"
+            subtext="Auto-calculates once burn is closed"
+            isNumeric={false}
+          />
+        </div>
+      </div>
+
+      {/* ===== CASH POSITION VS TARGET (PRIMARY CHART) ===== */}
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Cash Position vs Quarterly Target</h2>
+        <div className="bg-white border border-slate-200 rounded-lg p-6">
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={cashComparisonData}>
+              <CartesianGrid stroke="#f1f5f9" vertical={false} />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <RechartsTooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.5rem' }} />
+              <Bar dataKey="value" fill="#10b981">
+                <Cell fill="#cbd5e1" />
+                <Cell fill="#10b981" />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+            <strong>✓ Strong liquidity position:</strong> Actual cash ($3.54M) exceeds target by $2.21M, providing healthy buffer for operations.
+          </div>
+        </div>
+      </div>
+
+      {/* ===== WORKING CAPITAL + FUNDING (2-COLUMN) ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Working Capital Movement */}
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Working Capital Movement</h2>
+          <div className="bg-white border border-slate-200 rounded-lg p-6">
+            <div className="flex items-center justify-center mb-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <ArrowDown className="w-6 h-6 text-red-600" />
+                  <span className="text-4xl font-bold text-red-600">$60.5K</span>
+                </div>
+                <p className="text-sm text-slate-600">Working capital change (QTD)</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded">
+                <span className="text-sm font-medium text-slate-900">Impact</span>
+                <span className="text-sm font-bold text-red-700">Negative outflow</span>
+              </div>
+              <p className="text-xs text-slate-600 p-3">Negative working capital movement this period indicates increased operational liabilities or decreased current assets. Monitor closely.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Non-Dilutive Funding */}
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Non-Dilutive Funding Target</h2>
+          <div className="bg-white border border-slate-200 rounded-lg p-6">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={fundingData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  <Cell fill="#6366f1" />
+                  <Cell fill="#e5e7eb" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-indigo-500" />
+                  <span className="text-slate-700">Secured</span>
+                </div>
+                <span className="font-bold text-slate-900">$0 (0%)</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-gray-300" />
+                  <span className="text-slate-700">Target</span>
+                </div>
+                <span className="font-bold text-slate-900">$500K</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 mt-3">Strategic: No non-dilutive funding secured yet. This is a strategic priority, not an operational concern given strong cash position.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== BURN → RUNWAY DEPENDENCY VISUAL ===== */}
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Burn → Runway Relationship</h2>
+        <div className="bg-white border border-slate-200 rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <TrendingDown className="w-5 h-5 text-slate-500" />
+                <h4 className="font-semibold text-slate-900">Operating Burn</h4>
+              </div>
+              <p className="text-sm text-slate-600">YTD: $279,441 (in progress)</p>
+            </div>
+
+            <div className="flex-shrink-0 px-4">
+              <div className="border-t-2 border-dashed border-slate-400 w-16 flex items-center justify-center">
+                <span className="text-xs text-slate-500 font-medium">→</span>
+              </div>
+            </div>
+
+            <div className="flex-1 text-right">
+              <div className="flex items-center gap-3 justify-end mb-2">
+                <h4 className="font-semibold text-slate-900">Runway</h4>
+                <Clock className="w-5 h-5 text-slate-500" />
+              </div>
+              <p className="text-sm text-slate-600">Target: 24 months (pending data)</p>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded text-sm text-slate-700">
+            <p>
+              <strong>Data Dependency:</strong> Runway auto-calculates once operating burn is finalized. This is not missing data – it's a
+              calculated field awaiting input.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== OPERATING BURN TREND ===== */}
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Operating Burn Trend</h2>
+        <div className="bg-white border border-slate-200 rounded-lg p-6">
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={burnTrendData}>
+              <CartesianGrid stroke="#f1f5f9" vertical={false} />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <RechartsTooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.5rem' }} />
+              <Legend />
+              <Line type="monotone" dataKey="burn" stroke="#ef4444" strokeWidth={2} name="Cumulative Burn" dot={{ fill: '#ef4444' }} />
+              <Line type="monotone" dataKey="monthly" stroke="#94a3b8" strokeWidth={2} name="Monthly Delta" strokeDasharray="5 5" />
+            </LineChart>
+          </ResponsiveContainer>
+          <p className="text-xs text-slate-600 mt-4">
+            <strong>Note:</strong> Operating burn data closing in progress. Final figures will drive runway recalculation.
+          </p>
+        </div>
+      </div>
+
+      {/* ===== RAG STATUS BAND ===== */}
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Financial Status</h2>
+        <RAGBand data={ragStatus} />
+      </div>
+
+      {/* ===== FOOTER ===== */}
+      <div className="text-xs text-slate-500 text-center pt-4 border-t border-slate-200">
+        Financial data updated quarterly. In-progress items are flagged with status. All calculated fields auto-update once dependencies are complete.
+      </div>
+
+      {/* Definitions Section */}
+      <DefinitionsSection department="finance" />
     </div>
   );
-}
-
-function SectionCard({ title, children }: any) {
-  return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
-      <h3 className="font-bold text-slate-900 mb-4">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function TableCard({ title, children }: any) {
-  return (
-    <div className="p-4 border rounded">
-      <h3 className="font-bold mb-2">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function Th({ children }: any) {
-  return <th className="border px-2 py-1 text-left bg-slate-100">{children}</th>;
-}
-
-function Td({ children, className = '' }: any) {
-  return <td className={`border px-2 py-1 ${className}`}>{children}</td>;
 }

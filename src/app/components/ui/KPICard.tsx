@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { ComparisonResult, getStatusBadgeColor, formatGrowth } from '../../lib/comparisonUtils';
+import { ComparisonResult, getStatusBadgeColor, formatGrowth as formatGrowthUtil } from '../../../lib/comparisonUtils';
 
 interface KPICardProps {
   title: string;
@@ -139,7 +139,7 @@ export function KPICard({
                   : 'text-slate-600'
               }`}
             >
-              {formatGrowth(growth)}
+              {formatGrowthUtil(growth)}
             </p>
           </div>
           <div className={`${getStatusBadgeColor(status)} mt-4`}>
@@ -188,6 +188,13 @@ export function KPIComparisonCard({
           bgColor: 'bg-red-50',
           borderColor: 'border-red-200',
           textColor: 'text-red-700',
+        };
+      default:
+        return {
+          label: 'On Track',
+          bgColor: 'bg-green-50',
+          borderColor: 'border-green-200',
+          textColor: 'text-green-700',
         };
     }
   };

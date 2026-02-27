@@ -1,21 +1,37 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Package, TrendingUp, Megaphone, DollarSign, Book, Upload } from 'lucide-react';
+import { LayoutDashboard, Package, TrendingUp, Megaphone, DollarSign, Book, Upload, LogOut, Loader } from 'lucide-react';
 import OverviewDashboard from './components/OverviewDashboard';
 import ProductDashboard from './components/ProductDashboard';
-import SalesDashboard from './components/SalesDashboard';
+import ExecutiveSalesPerformance from './components/ExecutiveSalesPerformance';
 import MarketingDashboard from './components/MarketingDashboard';
-
 import RnD from './components/RnD';
 import FinancialData from './components/FinancialData';
 import UploadKPI from './components/UploadKPI';
+import LoginPage from './pages/LoginPage';
 import { KPIProvider } from './kpi/KPIContext';
+import { useAuth } from './kpi/AuthContext';
 import MonthSelector from './components/MonthSelector';
 
-type Tab = 'overview' | 'product' | 'sales' | 'marketing' | 'rnd' | 'finance' | 'upload'; 
+type Tab = 'overview' | 'product' | 'sales' | 'marketing' | 'rnd' | 'finance' | 'upload';
 
-export default function App() {
+function DashboardApp() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const [department, setDepartment] = useState('All Departments');
+  const { user, signOut, isAdmin, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-teal-50/40 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader className="w-8 h-8 animate-spin text-teal-600" />
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage />;
+  }
 
   const navItems: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-5 h-5" /> },
@@ -24,12 +40,19 @@ export default function App() {
     { id: 'marketing', label: 'Marketing', icon: <Megaphone className="w-5 h-5" /> },
     { id: 'rnd', label: 'R&D', icon: <Book className="w-5 h-5" /> },
     { id: 'finance', label: 'Finance', icon: <DollarSign className="w-5 h-5" /> },
-    { id: 'upload', label: 'Upload KPI', icon: <Upload className="w-5 h-5" /> },
+    ...(isAdmin ? [{ id: 'upload' as Tab, label: 'Upload KPI', icon: <Upload className="w-5 h-5" /> }] : []),
   ];
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
-    <KPIProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-teal-50/40">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-teal-50/40">
       {/* Top Navigation Bar */}
       <nav className="bg-white/80 backdrop-blur-lg border-b border-slate-200/60 sticky top-0 z-50 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-8 py-4">
@@ -51,8 +74,19 @@ export default function App() {
               <MonthSelector />
             </div>
 
-            {/* Right Controls */}
+            {/* Right Controls - User info and logout */}
             <div className="flex items-center gap-4 min-w-fit">
+              <div className="text-right">
+                <p className="text-sm font-medium text-slate-900">{user.email}</p>
+                <p className="text-xs text-slate-600 capitalize">{user.role}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
@@ -77,30 +111,34 @@ export default function App() {
               </button>
             ))}
           </nav>
-
-         
         </aside>
 
         {/* Main Content Area */}
         <main className="flex-1 p-8">
           {activeTab === 'overview' && <OverviewDashboard />}
           {activeTab === 'product' && <ProductDashboard />}
-          {activeTab === 'sales' && <SalesDashboard />}
+          {activeTab === 'sales' && <ExecutiveSalesPerformance />}
           {activeTab === 'marketing' && <MarketingDashboard />}
           {activeTab === 'finance' && <FinancialData />}
           {activeTab === 'rnd' && <RnD />}
-          {activeTab === 'upload' && <UploadKPI />}
-          
+          {activeTab === 'upload' && isAdmin && <UploadKPI />}
 
           {/* Footer */}
           <footer className="mt-16 pt-8 border-t border-slate-200/60 text-center">
             <p className="text-xs text-slate-500">
-              Internal KPI Dashboard – HYDGEN | Q4 2025
+              Internal KPI Dashboard – HYDGEN
             </p>
           </footer>
         </main>
       </div>
-      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <KPIProvider>
+      <DashboardApp />
     </KPIProvider>
   );
 }

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { FULL_MONTHS, QUARTER_MONTH_MAP, getQuartersFromMonths } from '../../lib/quarterUtils';
+import { FULL_MONTHS, QUARTER_MONTH_MAP, getQuartersFromMonths, getQuarterMonthMapForYear, getAvailableQuartersForYear } from '../../lib/quarterUtils';
+import { CURRENT_MONTH, analyzeTimeSelection, getComparisonPeriods, isCompleteQuarter, TimeSelectionContext, ComparisonPeriod } from '../../lib/smartTimeUtils';
 
 export interface MarketingKPI {
   id?: string;
@@ -32,10 +33,16 @@ interface KPIContextValue {
   bdData: BDKpi[];
   selectedMonths: string[]; // Full month names: January, February, etc.
   selectedQuarters: string[]; // Q1, Q2, Q3, Q4
+  selectedYear: string; // FY2025, FY2026 etc.
   setSelectedMonths: (m: string[]) => void;
   setSelectedQuarters: (q: string[]) => void;
+  setSelectedYear: (year: string) => void;
   reload: () => Promise<void>;
   currentQuarters: string[];
+  // Smart time utilities
+  timeContext: TimeSelectionContext;
+  comparisonPeriods: ComparisonPeriod;
+  isQuarterView: boolean;
 }
 
 const KPIContext = createContext<KPIContextValue | undefined>(undefined);
@@ -57,8 +64,10 @@ export const getQuarterFromMonths = (selectedMonths: string[]): string | null =>
 export const KPIProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   const [marketingData, setMarketingData] = useState<MarketingKPI[]>([]);
   const [bdData, setBdData] = useState<BDKpi[]>([]);
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  // Default to current month (February) for smart analytics
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([CURRENT_MONTH]);
   const [selectedQuarters, setSelectedQuarters] = useState<string[]>([]);
+  const [selectedYear, setSelectedYear] = useState<string>('FY2026');
 
   const fetchData = async () => {
     try {
@@ -87,13 +96,20 @@ export const KPIProvider: React.FC<React.PropsWithChildren<{}>> = ({ children })
 
   // Derive current quarters from selected months
   const currentQuarters = getQuartersFromMonths(selectedMonths);
+  
+  // Compute smart time context
+  const timeContext = analyzeTimeSelection(selectedMonths, selectedYear);
+  const comparisonPeriods = getComparisonPeriods(selectedMonths, selectedYear);
+  const isQuarterView = isCompleteQuarter(selectedMonths, selectedYear);
 
   // Sync quarters with months - when quarters change, update months
+  // But only if user is in "quarter mode" (not custom month mode)
   useEffect(() => {
     if (selectedQuarters.length > 0) {
       const monthsFromQuarters: string[] = [];
+      const yearMap = getQuarterMonthMapForYear(selectedYear);
       selectedQuarters.forEach((quarter) => {
-        const months = QUARTER_MONTH_MAP[quarter];
+        const months = yearMap[quarter];
         if (months) {
           months.forEach((m) => {
             if (!monthsFromQuarters.includes(m)) {
@@ -104,12 +120,21 @@ export const KPIProvider: React.FC<React.PropsWithChildren<{}>> = ({ children })
       });
       setSelectedMonths(monthsFromQuarters);
     }
-  }, [selectedQuarters]);
+  }, [selectedQuarters, selectedYear]);
 
-  // Default to Q4 months if nothing selected
+  // Default to first available quarter when year changes
+  useEffect(() => {
+    const availableQuarters = getAvailableQuartersForYear(selectedYear);
+    if (availableQuarters.length > 0) {
+      setSelectedQuarters([availableQuarters[0]]);
+      setSelectedMonths([]);
+    }
+  }, [selectedYear]);
+
+  // Default to current month if nothing selected
   useEffect(() => {
     if (selectedMonths.length === 0 && selectedQuarters.length === 0) {
-      setSelectedQuarters(['Q4']);
+      setSelectedMonths([CURRENT_MONTH]);
     }
   }, [selectedMonths.length, selectedQuarters.length]);
 
@@ -120,10 +145,15 @@ export const KPIProvider: React.FC<React.PropsWithChildren<{}>> = ({ children })
         bdData,
         selectedMonths,
         selectedQuarters,
+        selectedYear,
         setSelectedMonths,
         setSelectedQuarters,
+        setSelectedYear,
         reload,
         currentQuarters,
+        timeContext,
+        comparisonPeriods,
+        isQuarterView,
       }}
     >
       {children}

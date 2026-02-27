@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { KPICard, KPIComparisonCard } from './ui/KPICard';
-import { compareQuarters } from '../lib/comparisonUtils';
+import { compareQuarters } from '../../lib/comparisonUtils';
 
 interface KPIData {
   name: string;

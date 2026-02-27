@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { Upload, CheckCircle, AlertCircle, Loader, FileCheck } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader, FileCheck, Download } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useKPI } from '../kpi/KPIContext';
 import * as XLSX from 'xlsx';
 import { FULL_MONTHS } from '../../lib/quarterUtils';
+import { downloadExcelTemplate } from '../../lib/excelTemplateGenerator';
 
 const DEPARTMENT_SHEETS = ['Product', 'Sales', 'Marketing', 'RnD', 'Finance'];
 const REQUIRED_COLUMNS = ['kpi_name', 'month', 'target', 'actual'];
@@ -289,6 +290,28 @@ export default function UploadKPI() {
       <div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Upload KPI Data</h2>
         <p className="text-slate-600">Upload an Excel file with multiple sheets for all departments</p>
+      </div>
+
+      {/* Download Template Section */}
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border border-purple-200 shadow-sm">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+              <FileCheck className="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">Need a template?</p>
+              <p className="text-sm text-slate-600">Download a pre-formatted Excel file with all department sheets</p>
+            </div>
+          </div>
+          <button
+            onClick={() => downloadExcelTemplate('January', 2025)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
+          >
+            <Download className="w-5 h-5" />
+            Download Template
+          </button>
+        </div>
       </div>
 
       {/* Upload Card */}
