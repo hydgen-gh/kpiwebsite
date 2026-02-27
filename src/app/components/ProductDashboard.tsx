@@ -13,7 +13,9 @@ import {
   Target,
   CheckCircle,
   AlertCircle,
+  Upload as UploadIcon,
 } from 'lucide-react';
+import { EmptyState } from './EmptyState';
 import {
   PieChart,
   Pie,
@@ -856,6 +858,21 @@ export default function ProductDashboard() {
   // ========================================================================
   // MAIN RENDER
   // ========================================================================
+  const { marketingData, bdData } = useKPI();
+  const hasData = marketingData.length > 0 || bdData.length > 0;
+  
+  if (!hasData) {
+    return (
+      <div>
+        <EmptyState
+          icon={<UploadIcon className="w-12 h-12" />}
+          title="No Data Yet"
+          description="Upload your Excel file with KPI data to see the Product dashboard."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}

@@ -11,7 +11,9 @@ import {
   AlertCircle,
   Lock,
   Briefcase,
+  Upload as UploadIcon,
 } from 'lucide-react';
+import { EmptyState } from './EmptyState';
 import {
   BarChart,
   Bar,
@@ -351,6 +353,22 @@ export default function RnD() {
   const technologyRiskIndex = riskReductionIndex;
   const ipStrengthScore = Math.round((patentData.filings / patentData.filingsTarget) * 100);
   const avgMilestoneCompletion = Math.round((riskReductionIndex + ipStrengthScore) / 2);
+
+  // Check if data exists
+  const { marketingData, bdData } = useKPI();
+  const hasData = marketingData.length > 0 || bdData.length > 0;
+  
+  if (!hasData) {
+    return (
+      <div>
+        <EmptyState
+          icon={<UploadIcon className="w-12 h-12" />}
+          title="No Data Yet"
+          description="Upload your Excel file with KPI data to see the R&D dashboard."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

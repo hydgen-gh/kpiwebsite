@@ -1,14 +1,34 @@
 import React, { useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TrendingUp, Target, Zap, AlertTriangle, CheckCircle2, DollarSign, Rocket, MapPin, TrendingDown, Fuel, Lightbulb } from 'lucide-react';
+import { TrendingUp, Target, Zap, AlertTriangle, CheckCircle2, DollarSign, Rocket, MapPin, TrendingDown, Fuel, Lightbulb, Upload } from 'lucide-react';
 import { useKPI, getQuarterFromMonths } from '../kpi/KPIContext';
 import { useDashboardFilter } from '../../lib/dashboardFilterUtils';
 import { FilterStatusBadge } from './FilterStatusBadge';
+import { EmptyState } from './EmptyState';
 
 export default function OverviewDashboard() {
-  const { selectedMonths } = useKPI();
+  const { selectedMonths, marketingData, bdData } = useKPI();
   const { getMonthDisplay, isCustomMode } = useDashboardFilter();
   const [showLegend, setShowLegend] = useState(true);
+
+  // Check if data exists - show empty state if not
+  const hasData = marketingData.length > 0 || bdData.length > 0;
+
+  if (!hasData) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Executive Overview</h1>
+          <p className="text-slate-600 mt-1">All KPIs at a glance</p>
+        </div>
+        <EmptyState
+          icon={<Upload className="w-12 h-12" />}
+          title="No Data Yet"
+          description="Upload your Excel file with KPI data to see the executive overview dashboard."
+        />
+      </div>
+    );
+  }
 
   // ========================================================================
   // STRATEGIC OUTCOMES (Enhanced Goal Tracking)

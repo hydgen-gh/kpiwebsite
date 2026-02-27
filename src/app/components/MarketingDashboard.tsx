@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock, Target, Zap, Users, BarChart3, Gauge } from 'lucide-react';
+import { TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock, Target, Zap, Users, BarChart3, Gauge, Upload as UploadIcon } from 'lucide-react';
+import { EmptyState } from './EmptyState';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { FilterStatusBadge } from './FilterStatusBadge';
 import { DefinitionsSection } from './DefinitionsSection';
@@ -304,6 +305,19 @@ export default function MarketingDashboard() {
     'No response-time SLA tracking – process gap to address',
     `ICP alignment at ${icpPercentageArchievement.toFixed(0)}% - room for improvement`,
   ];
+
+  // Check if data exists
+  if (!marketingData || marketingData.length === 0) {
+    return (
+      <div>
+        <EmptyState
+          icon={<UploadIcon className="w-12 h-12" />}
+          title="No Data Yet"
+          description="Upload your Excel file with KPI data to see the Marketing dashboard."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

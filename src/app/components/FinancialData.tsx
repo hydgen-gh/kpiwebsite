@@ -1,5 +1,6 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock, DollarSign, Wallet, Zap, ArrowUp, ArrowDown, Gauge } from 'lucide-react';
+import { TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock, DollarSign, Wallet, Zap, ArrowUp, ArrowDown, Gauge, Upload as UploadIcon } from 'lucide-react';
+import { EmptyState } from './EmptyState';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { FilterStatusBadge } from './FilterStatusBadge';
 import { DefinitionsSection } from './DefinitionsSection';
@@ -269,6 +270,22 @@ export default function FinancialData() {
     `No non-dilutive funding secured yet – $500K target remains at 0%`,
     `Strong liquidity position supports current operational needs with significant runway`,
   ];
+
+  // Check if data exists
+  const { marketingData, bdData } = useKPI();
+  const hasData = marketingData.length > 0 || bdData.length > 0;
+  
+  if (!hasData) {
+    return (
+      <div>
+        <EmptyState
+          icon={<UploadIcon className="w-12 h-12" />}
+          title="No Data Yet"
+          description="Upload your Excel file with KPI data to see the Financial dashboard."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
