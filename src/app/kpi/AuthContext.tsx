@@ -53,15 +53,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await authService.signIn(email, password);
-    if (error) throw error;
+    const { error, data } = await authService.signIn(email, password);
+    if (error) {
+      throw new Error(error.message || 'Login failed');
+    }
+    if (!data.session) {
+      throw new Error('No session created after login');
+    }
     const currentUser = await authService.getCurrentUser();
     setUser(currentUser);
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await authService.signUp(email, password);
-    if (error) throw error;
+    const { error, data } = await authService.signUp(email, password);
+    if (error) {
+      throw new Error(error.message || 'Sign up failed');
+    }
+    if (!data.user) {
+      throw new Error('No user created after sign up');
+    }
   };
 
   const signOut = async () => {
