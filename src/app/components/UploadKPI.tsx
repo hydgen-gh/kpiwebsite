@@ -7,7 +7,7 @@ import { FULL_MONTHS } from '../../lib/quarterUtils';
 import { downloadExcelTemplate } from '../../lib/excelTemplateGenerator';
 
 const DEPARTMENT_SHEETS = ['Product', 'Sales', 'Marketing', 'RnD', 'Finance'];
-const REQUIRED_COLUMNS = ['kpi_name', 'month', 'target', 'actual'];
+const REQUIRED_COLUMNS = ['kpi_name', 'current_month', 'current_month_actual', 'category'];
 
 interface SheetUploadResult {
   department: string;
@@ -19,12 +19,38 @@ interface SheetUploadResult {
 interface ParsedKPIData {
   department: string;
   kpi_name: string;
-  month: string;
-  quarter: string;
-  financial_year: string;
-  target: number;
-  actual: number;
   category: string;
+  
+  // Current period
+  current_month: string;
+  current_month_target: number;
+  current_month_actual: number;
+  
+  // MoM comparison
+  previous_month?: string;
+  previous_month_actual?: number;
+  mom_pct_change?: number;
+  
+  // Current quarter
+  current_quarter?: string;
+  current_quarter_target?: number;
+  current_quarter_actual?: number;
+  
+  // QoQ comparison
+  previous_quarter?: string;
+  previous_quarter_actual?: number;
+  qoq_pct_change?: number;
+  
+  // YoY comparison
+  same_month_prior_year_actual?: number;
+  yoy_pct_change?: number;
+  
+  // Utility fields
+  financial_year: string;
+  quarter: string; // For backward compatibility
+  month: string; // For backward compatibility
+  target: number; // For backward compatibility
+  actual: number; // For backward compatibility
 }
 
 export default function UploadKPI() {
@@ -50,7 +76,7 @@ export default function UploadKPI() {
   };
 
   /**
-   * Parse Excel file with multiple sheets
+   * Parse Excel file with multiple sheets - NEW FORMAT with comparisons
    */
   const parseExcelFile = (file: File): Promise<Record<string, ParsedKPIData[]>> => {
     return new Promise((resolve, reject) => {
@@ -83,21 +109,71 @@ export default function UploadKPI() {
                 sheetName.toLowerCase().includes(dept.toLowerCase())
               ) || sheetName;
 
-              // Map data
+              // Map data with new template structure
               const kpiData: ParsedKPIData[] = jsonData.map((row: any) => {
-                const month = (row.month || row.Month || '').toString().trim();
-                const fullMonth = FULL_MONTHS.find(m => m.toLowerCase() === month.toLowerCase()) || month;
-
-                return {
-                  department,
-                  kpi_name: (row.kpi_name || row['KPI Name'] || row.kpi || '').toString().trim(),
-                  month: fullMonth,
-                  quarter: getQuarterFromMonth(month),
-                  financial_year: (row.financial_year || row['Financial Year'] || 'FY 2025').toString().trim(),
-                  target: parseFloat(row.target || row.Target || 0),
-                  actual: parseFloat(row.actual || row.Actual || 0),
-                  category: (row.category || row.Category || 'General').toString().trim(),
+                // Helper function to normalize column names (handle both cases)
+                const getCol = (names: string[]): any => {
+                  for (const name of names) {
+                    if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
+                      return row[name];
+                    }
+                  }
+                  return undefined;
                 };
+
+                const currentMonth = getCol(['Current Month', 'current_month']) || 'Unknown';
+                const fullMonth = FULL_MONTHS.find(m => m.toLowerCase() === currentMonth.toString().toLowerCase()) || currentMonth;
+
+                // Parse numeric values
+                const parseNum = (val: any): number => {
+                  if (!val && val !== 0) return 0;
+                  const num = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
+                  return isNaN(num) ? 0 : num;
+                };
+
+                // Build backward-compatible fields
+                const currentMonthActual = parseNum(getCol(['Current Month Actual', 'current_month_actual'])) || 0;
+                const currentQuarter = getCol(['Current Quarter', 'current_quarter']) || 'Q4';
+                const currentQuarterActual = parseNum(getCol(['Current Quarter Actual', 'current_quarter_actual'])) || 0;
+
+                const record: ParsedKPIData = {
+                  department,
+                  kpi_name: getCol(['KPI Name', 'kpi_name', 'KPI Name']).toString().trim(),
+                  category: getCol(['Category', 'category', 'Category']).toString().trim(),
+                  
+                  // Current period
+                  current_month: fullMonth,
+                  current_month_target: parseNum(getCol(['Current Month Target', 'current_month_target'])),
+                  current_month_actual: currentMonthActual,
+                  
+                  // MoM comparison
+                  previous_month: getCol(['Previous Month', 'previous_month']).toString().trim(),
+                  previous_month_actual: parseNum(getCol(['Previous Month Actual', 'previous_month_actual'])),
+                  mom_pct_change: parseNum(getCol(['MoM % Change', 'mom_pct_change'])),
+                  
+                  // Current quarter
+                  current_quarter: currentQuarter,
+                  current_quarter_target: parseNum(getCol(['Current Quarter Target', 'current_quarter_target'])),
+                  current_quarter_actual: currentQuarterActual,
+                  
+                  // QoQ comparison
+                  previous_quarter: getCol(['Previous Quarter', 'previous_quarter']).toString().trim(),
+                  previous_quarter_actual: parseNum(getCol(['Previous Quarter Actual', 'previous_quarter_actual'])),
+                  qoq_pct_change: parseNum(getCol(['QoQ % Change', 'qoq_pct_change'])),
+                  
+                  // YoY comparison
+                  same_month_prior_year_actual: parseNum(getCol(['Same Month Prior Year Actual', 'same_month_prior_year_actual'])),
+                  yoy_pct_change: parseNum(getCol(['YoY % Change', 'yoy_pct_change'])),
+                  
+                  // Utility fields for backward compatibility
+                  financial_year: getCol(['Financial Year', 'financial_year']).toString().trim() || 'FY 2026',
+                  quarter: getQuarterFromMonth(fullMonth),
+                  month: fullMonth,
+                  target: parseNum(getCol(['Current Month Target', 'current_month_target'])),
+                  actual: currentMonthActual,
+                };
+
+                return record;
               });
 
               result[department] = kpiData;
@@ -138,9 +214,12 @@ export default function UploadKPI() {
           continue;
         }
 
-        // Validate required fields
+        // Validate required fields (new template)
         const validData = data.filter(item =>
-          item.kpi_name && item.month && !isNaN(item.target) && !isNaN(item.actual)
+          item.kpi_name && 
+          item.current_month && 
+          item.current_month_actual !== undefined &&
+          item.current_month_actual !== null
         );
 
         if (validData.length === 0) {
