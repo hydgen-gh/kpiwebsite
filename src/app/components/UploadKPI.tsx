@@ -234,11 +234,14 @@ export default function UploadKPI() {
 
         // Insert into appropriate table
         const tableName = getTableNameForDepartment(department);
-        const { error } = await supabase
+        console.log(`Uploading ${validData.length} records to ${tableName}`);
+        
+        const { data: uploadedData, error } = await supabase
           .from(tableName)
           .insert(validData);
 
         if (error) {
+          console.error(`Upload error for ${tableName}:`, error);
           results.push({
             department,
             success: false,
@@ -246,6 +249,7 @@ export default function UploadKPI() {
             error: error.message,
           });
         } else {
+          console.log(`Successfully uploaded ${validData.length} records to ${tableName}`);
           results.push({
             department,
             success: true,
@@ -254,15 +258,17 @@ export default function UploadKPI() {
           successCount++;
         }
       } catch (error: any) {
+        console.error(`Exception uploading ${department}:`, error);
         results.push({
           department,
           success: false,
           recordsUploaded: 0,
-          error: error.message,
+          error: error.message || 'Unknown error during upload',
         });
       }
     }
 
+    console.log('Upload results:', results);
     return { results, successCount };
   };
 
@@ -320,11 +326,21 @@ export default function UploadKPI() {
         fileInputRef.current.value = '';
       }
 
-      // Reload context
+      // Reload context with timeout
+      setMessage('Refreshing dashboard data...');
       try {
-        await reload();
-      } catch (e) {
-        console.error('Reload error:', e);
+        const reloadPromise = reload();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Reload timeout')), 5000)
+        );
+        await Promise.race([reloadPromise, timeoutPromise]);
+      } catch (reloadError) {
+        console.error('Reload error:', reloadError);
+        // Still show success if upload worked, even if reload fails
+        if (successCount === 0) {
+          setStatus('error');
+          setMessage('Upload succeeded but failed to refresh dashboard');
+        }
       }
 
       // Reset after 8 seconds

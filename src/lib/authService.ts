@@ -1,16 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
 
-// Create a single Supabase client with optimized settings
-// Setting db.timeout to 5 seconds and using persistent sessions
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-});
+// Create a single Supabase client instance - ensure it's only created once
+let supabaseInstance: any = null;
+
+function getSupabaseClient() {
+  if (!supabaseInstance) {
+    console.log('Creating Supabase client instance');
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    });
+  }
+  return supabaseInstance;
+}
+
+export const supabase = getSupabaseClient();
 
 export interface AuthUser {
   id: string;
@@ -36,30 +45,26 @@ export const authService = {
       const { data } = await supabase.auth.getSession();
       if (!data.session?.user) return null;
 
-      // Try to get user role from database, with a 3 second timeout
+      // Try to get user role from database with a 2 second timeout
       let role = 'user';
       try {
-        const dbQueryPromise = supabase
+        const rolePromise = supabase
           .from('users')
           .select('role')
           .eq('id', data.session.user.id)
           .single();
 
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('DB timeout')), 3000)
+          setTimeout(() => reject(new Error('DB timeout')), 2000)
         );
 
-        const { data: userData } = await Promise.race([
-          dbQueryPromise,
-          timeoutPromise,
-        ]) as any;
-
-        if (userData?.role) {
-          role = userData.role;
+        const result = await Promise.race([rolePromise, timeoutPromise]) as any;
+        if (result.data?.role) {
+          role = result.data.role;
         }
       } catch (dbError) {
         // If database query fails or times out, default to 'user' role
-        console.warn('Could not fetch user role from database, defaulting to user role');
+        console.warn('Could not fetch user role from database, defaulting to user role', dbError);
       }
 
       return {
@@ -74,14 +79,21 @@ export const authService = {
   },
 
   async onAuthStateChange(callback: (user: AuthUser | null) => void) {
-    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('Setting up auth state listener');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+      console.log('Auth state change event:', event, 'Session:', session?.user?.email);
       if (session?.user) {
-        const user = await this.getCurrentUser();
-        callback(user);
+        try {
+          const user = await this.getCurrentUser();
+          callback(user);
+        } catch (error) {
+          console.error('Error getting user in listener:', error);
+          callback(null);
+        }
       } else {
         callback(null);
       }
     });
-    return data.subscription;
+    return subscription;
   },
 };

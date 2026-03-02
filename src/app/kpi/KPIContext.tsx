@@ -187,16 +187,37 @@ export const KPIProvider: React.FC<React.PropsWithChildren<{}>> = ({ children })
 
   const fetchData = async () => {
     try {
-      const [mktRes, bdRes] = await Promise.all([
+      const [mktRes, bdRes, prodRes, salesRes, mkgRes, rndRes, finRes] = await Promise.all([
         supabase.from('marketing_dashboard').select('*'),
         supabase.from('bd_dashboard').select('*'),
+        supabase.from('product_kpis').select('*'),
+        supabase.from('sales_kpis').select('*'),
+        supabase.from('marketing_kpis').select('*'),
+        supabase.from('rnd_kpis').select('*'),
+        supabase.from('finance_kpis').select('*'),
       ]);
 
       if (mktRes.error) console.error('Marketing fetch error:', mktRes.error);
       if (bdRes.error) console.error('BD fetch error:', bdRes.error);
+      if (prodRes.error) console.error('Product KPI fetch error:', prodRes.error);
+      if (salesRes.error) console.error('Sales KPI fetch error:', salesRes.error);
+      if (mkgRes.error) console.error('Marketing KPI fetch error:', mkgRes.error);
+      if (rndRes.error) console.error('RnD KPI fetch error:', rndRes.error);
+      if (finRes.error) console.error('Finance KPI fetch error:', finRes.error);
 
       setMarketingData((mktRes.data || []) as MarketingKPI[]);
       setBdData((bdRes.data || []) as BDKpi[]);
+      
+      // Combine all comprehensive KPI data from all department tables
+      const allComprehensiveKPIs = [
+        ...(prodRes.data || []),
+        ...(salesRes.data || []),
+        ...(mkgRes.data || []),
+        ...(rndRes.data || []),
+        ...(finRes.data || []),
+      ] as ComprehensiveKPI[];
+      
+      setComprehensiveKPIData(allComprehensiveKPIs);
     } catch (err) {
       console.error('Fetch error:', err);
     }
