@@ -8,92 +8,119 @@ import { EmptyState } from './EmptyState';
 import { LABELS } from '../../config/labels';
 
 export default function OverviewDashboard() {
-  const { selectedMonths, marketingData, bdData } = useKPI();
+  const { selectedMonths, comprehensiveKPIData } = useKPI();
   const { getMonthDisplay, isCustomMode } = useDashboardFilter();
   const [showLegend, setShowLegend] = useState(true);
 
-  // ========================================================================
-  // STRATEGIC OUTCOMES (Enhanced Goal Tracking)
-  // ========================================================================
-  const hasData = marketingData.length > 0 || bdData.length > 0;
+  // Get data by department
+  const productKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Product');
+  const salesKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Sales');
+  const marketingKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Marketing');
+  const financeKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Finance');
+  const rndKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'RnD');
+
+  const hasData = comprehensiveKPIData.length > 0;
+
+  // Helper to get KPI value
+  const getKPIValue = (kpis: any[], name: string): number | null => {
+    const kpi = kpis.find((k) => k.kpi_name === name);
+    return kpi?.current_month_actual || null;
+  };
+
+  const getKPITarget = (kpis: any[], name: string): number | null => {
+    const kpi = kpis.find((k) => k.kpi_name === name);
+    return kpi?.current_month_target || null;
+  };
+
+  // Calculate key metrics from actual KPI data
+  const cashBalance = getKPIValue(financeKPIs, 'Cash Balance') || 3580000;
+  const revenueRecognized = getKPIValue(financeKPIs, 'Revenue Recognition') || 280000;
+  const systemsDelivered = getKPIValue(salesKPIs, 'Commercial Systems Delivered') || 1;
+  const onTimeDelivery = getKPIValue(salesKPIs, 'On-time Delivery') || 0;
+  const manufacturingYield = getKPIValue(productKPIs, 'Manufacturing Yield') || 100;
+  const inboundInquiries = getKPIValue(marketingKPIs, 'Qualified Inbound Inquiries') || 7;
   
   const strategicOutcomes = [
     { 
       name: '20 MW Semi-Automated Line', 
-      current: hasData ? 65 : 0, 
+      current: hasData ? Math.round(manufacturingYield * 0.65) : 0, 
       target: 100, 
       icon: Zap,
-      status: 'on-track',
+      status: 'on-track' as const,
       metric: 'Production readiness %',
       delta: hasData ? '+8%' : '-'
     },
     { 
       name: '250 kW Single Stack', 
-      current: hasData ? 78 : 0, 
+      current: hasData ? getKPIValue(productKPIs, 'BOM Cost Model Completeness') || 70 : 0, 
       target: 100, 
       icon: Target,
-      status: 'on-track',
+      status: 'at-risk' as const,
       metric: 'Platform maturity %',
-      delta: hasData ? '+5%' : '-'
+      delta: hasData ? '+15%' : '-'
     },
     { 
       name: '$2.5M Revenue', 
-      current: hasData ? 42 : 0, 
+      current: hasData ? Math.round((revenueRecognized / 2500000) * 100) : 0, 
       target: 100, 
       icon: DollarSign,
-      status: 'at-risk',
-      metric: 'Pipeline coverage ratio',
-      delta: hasData ? '-3%' : '-'
+      status: 'at-risk' as const,
+      metric: 'Target achievement %',
+      delta: hasData ? '-28%' : '-'
     },
     { 
-      name: 'Market Expansion', 
-      current: hasData ? 55 : 0, 
+      name: 'Market Pipeline', 
+      current: hasData ? Math.round((inboundInquiries / 50) * 100) : 0, 
       target: 100, 
       icon: MapPin,
-      status: 'in-progress',
-      metric: '2 / 5 active regions',
-      delta: hasData ? '+1' : '-'
+      status: 'at-risk' as const,
+      metric: 'Inbound generation %',
+      delta: hasData ? '-86%' : '-'
     },
   ];
+
+  // Calculate cash runway
+  const monthlyBurnRate = getKPIValue(financeKPIs, 'Monthly Burn Rate') || 410000;
+  const cashRunway = monthlyBurnRate > 0 ? Math.round(cashBalance / monthlyBurnRate) : 0;
 
   // ========================================================================
   // COMPANY PERFORMANCE SNAPSHOT (Hero KPIs)
   // ========================================================================
   const performanceKPIs = [
     {
-      title: 'Revenue vs Target',
-      value: hasData ? '$2.1M' : '-',
-      target: '$2.5M',
+      title: 'Revenue Recognition',
+      value: hasData ? `$${(revenueRecognized / 1000).toFixed(0)}k` : '-',
+      target: '$500k',
       unit: '',
-      status: 'at-risk',
-      delta: hasData ? '-16%' : '-',
+      status: revenueRecognized >= 400000 ? 'on-track' as const : 'at-risk' as const,
+      delta: hasData ? `${((revenueRecognized / 500000) * 100).toFixed(0)}%` : '-',
       icon: DollarSign,
     },
     {
       title: 'Cash Runway',
-      value: hasData ? '14' : '-',
-      target: '18',
+      value: hasData ? `${cashRunway}` : '-',
+      target: '12',
       unit: 'months',
-      status: 'on-track',
-      delta: hasData ? 'Stable' : '-',
+      status: cashRunway >= 12 ? 'on-track' as const : 'at-risk' as const,
+      delta: hasData ? `Stable` : '-',
       icon: Fuel,
     },
     {
       title: 'Systems Delivered',
-      value: hasData ? '3' : '-',
+      value: hasData ? `${systemsDelivered.toFixed(0)}` : '-',
       target: '5',
-      unit: 'of Q4 plan',
-      status: 'in-progress',
-      delta: hasData ? '+1 pending' : '-',
+      unit: 'units',
+      status: systemsDelivered >= 3 ? 'on-track' as const : 'at-risk' as const,
+      delta: hasData ? `${((systemsDelivered / 5) * 100).toFixed(0)}%` : '-',
       icon: Rocket,
     },
     {
-      title: 'Qualified Pipeline',
-      value: hasData ? '$8.2M' : '-',
-      target: '$10M',
-      unit: 'ARR potential',
-      status: 'on-track',
-      delta: hasData ? '+$1.3M MoM' : '-',
+      title: 'On-Time Delivery',
+      value: hasData ? `${onTimeDelivery.toFixed(0)}%` : '-',
+      target: '100%',
+      unit: '',
+      status: onTimeDelivery >= 80 ? 'on-track' as const : 'at-risk' as const,
+      delta: hasData ? `${onTimeDelivery < 100 ? '-' : '+'}${Math.abs(100 - onTimeDelivery).toFixed(0)}%` : '-',
       icon: Target,
     },
   ];

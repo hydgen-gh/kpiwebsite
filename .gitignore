@@ -28,5 +28,15 @@ yarn-error.log*
 *.swo
 *~
 
+# Documentation
+*.md
+!README.md
+
+# Data files
+backend/data/
+*.xlsx
+DATABASE_SCHEMA.sql
+analyze_tracking.py
+
 # OS
 Thumbs.db

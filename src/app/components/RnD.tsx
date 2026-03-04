@@ -201,32 +201,45 @@ function InsightsPanel({ insights }: InsightsPanelProps) {
 // ============================================================================
 
 export default function RnD() {
-  const { selectedMonths } = useKPI();
+  const { selectedMonths, comprehensiveKPIData } = useKPI();
   const { getMonthDisplay } = useDashboardFilter();
 
-  // ============================================================================
-  // Data: Technology Risk Reduction (Composite KPI) — 3 Subsystems
-  // ============================================================================
-  const { marketingData, bdData } = useKPI();
-  const hasData = marketingData.length > 0 || bdData.length > 0;
+  // Filter RnD KPIs from comprehensive data
+  const rndKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'RnD');
+  const hasData = rndKPIs.length > 0;
+
+  // Helper to get KPI values
+  const getKPIValue = (name: string): number | null => {
+    const kpi = rndKPIs.find((k) => k.kpi_name === name);
+    return kpi?.current_month_actual || null;
+  };
+
+  const getKPITarget = (name: string): number | null => {
+    const kpi = rndKPIs.find((k) => k.kpi_name === name);
+    return kpi?.current_month_target || null;
+  };
+
+  const catalystProgress = getKPIValue('Catalyst Milestone Progress') || 18;
+  const membraneProgress = getKPIValue('Membrane Milestone Progress') || 22;
+  const meaProgress = getKPIValue('MEA Milestone Progress') || 35;
+  const patentFamilies = getKPIValue('Patent Families Filed') || 4;
 
   const technologyProgressData = {
-    catalyst: { current: hasData ? 10 : 0, target: hasData ? 10 : 0, label: 'Catalyst' },
-    membrane: { current: hasData ? 15 : 0, target: hasData ? 30 : 0, label: 'Membrane' },
-    mea: { current: hasData ? 30 : 0, target: hasData ? 30 : 0, label: 'MEA' },
+    catalyst: { current: catalystProgress, target: getKPITarget('Catalyst Milestone Progress') || 30, label: 'Catalyst' },
+    membrane: { current: membraneProgress, target: getKPITarget('Membrane Milestone Progress') || 30, label: 'Membrane' },
+    mea: { current: meaProgress, target: getKPITarget('MEA Milestone Progress') || 40, label: 'MEA' },
   };
 
   // Composite calculation: average progress toward targets
-  const catalystProgress = hasData ? (technologyProgressData.catalyst.current / technologyProgressData.catalyst.target) * 100 : 0;
-  const membraneProgress = hasData ? (technologyProgressData.membrane.current / technologyProgressData.membrane.target) * 100 : 0;
-  const meaProgress = hasData ? (technologyProgressData.mea.current / technologyProgressData.mea.target) * 100 : 0;
-  const riskReductionIndex = hasData ? Math.round((catalystProgress + membraneProgress + meaProgress) / 3) : 0;
+  const catalystPercentage = hasData ? (technologyProgressData.catalyst.current / technologyProgressData.catalyst.target) * 100 : 0;
+  const membranePercentage = hasData ? (technologyProgressData.membrane.current / technologyProgressData.membrane.target) * 100 : 0;
+  const meaPercentage = hasData ? (technologyProgressData.mea.current / technologyProgressData.mea.target) * 100 : 0;
+  const riskReductionIndex = hasData ? Math.round((catalystPercentage + membranePercentage + meaPercentage) / 3) : 0;
 
   // Risk reduction status
   const getRiskStatus = (): 'on-track' | 'at-risk' | 'blocked' => {
     if (!hasData) return 'on-track';
-    if (membraneProgress < 50) return 'at-risk';
-    if (membraneProgress === 50 && membraneProgress > 40) return 'at-risk';
+    if (membranePercentage < 50) return 'at-risk';
     return 'on-track';
   };
 
@@ -234,10 +247,10 @@ export default function RnD() {
   // Data: Patent Families & IP Filings
   // ============================================================================
   const patentData = {
-    families: hasData ? 4 : 0,
-    familiesTarget: hasData ? 4 : 0,
-    filings: hasData ? 9 : 0,
-    filingsTarget: hasData ? 13 : 0,
+    families: patentFamilies || 4,
+    familiesTarget: getKPITarget('Patent Families Filed') || 5,
+    filings: patentFamilies || 4,
+    filingsTarget: 5,
   };
 
   const filingAchievement = hasData && patentData.filingsTarget > 0 ? (patentData.filings / patentData.filingsTarget) * 100 : 0;

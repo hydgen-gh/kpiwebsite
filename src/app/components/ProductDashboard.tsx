@@ -154,13 +154,27 @@ const renderTooltip = ({ active, payload }: { active?: boolean; payload?: any[] 
 // MAIN COMPONENT
 // ============================================================================
 export default function ProductDashboard() {
-  const { selectedMonths, marketingData, bdData } = useKPI();
+  const { selectedMonths, comprehensiveKPIData } = useKPI();
   const { getMonthDisplay, isCustomMode } = useDashboardFilter();
-  const hasData = marketingData.length > 0 || bdData.length > 0;
   const [primaryView, setPrimaryView] = useState<'PEM' | 'AEM'>('PEM');
   const [secondaryView, setSecondaryView] = useState<'performance' | 'delivery'>('performance');
   const [pemStackSize, setPemStackSize] = useState<'5kW' | '25kW' | '250kW'>('25kW');
   const [aemStackSize, setAemStackSize] = useState<'5kW' | '25kW'>('5kW');
+
+  // Filter Product KPIs from comprehensive data
+  const productKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Product');
+  const hasData = productKPIs.length > 0;
+
+  // Helper to find KPI value by name and category
+  const getKPIValue = (name: string, category: string = ''): number | null => {
+    const kpi = productKPIs.find((k) => k.kpi_name === name && (!category || k.category === category));
+    return kpi?.current_month_actual || null;
+  };
+
+  const getKPITarget = (name: string, category: string = ''): number | null => {
+    const kpi = productKPIs.find((k) => k.kpi_name === name && (!category || k.category === category));
+    return kpi?.current_month_target || null;
+  };
 
   // ========================================================================
   // 🔵 PEM DATA BY STACK SIZE
@@ -184,19 +198,19 @@ export default function ProductDashboard() {
 
   // PEM 25kW - Primary Execution (Commercial Scale)
   const pem25kwData = {
-    stackEfficiency: { current: hasData ? 42 : 0, target: hasData ? 48 : 0, unit: 'kWh/kg' },
-    degradation: { current: hasData ? 0 : 0, target: hasData ? 0.5 : 0, unit: '%', status: 'on-track' as const },
-    hydrogenPurity: { current: hasData ? 99.999 : 0, target: hasData ? 99.99 : 0, unit: '%', status: 'exceeded' as const },
-    operatingPressure: { current: hasData ? 15 : 0, target: hasData ? 10 : 0, unit: 'bar', status: 'on-track' as const },
+    stackEfficiency: { current: getKPIValue('Stack Efficiency', 'PEM Stack Performance') || (hasData ? 42 : 0), target: getKPITarget('Stack Efficiency', 'PEM Stack Performance') || (hasData ? 48 : 0), unit: 'kWh/kg' },
+    degradation: { current: getKPIValue('Degradation Rate', 'PEM Stack Performance') || (hasData ? 0 : 0), target: getKPITarget('Degradation Rate', 'PEM Stack Performance') || (hasData ? 0.5 : 0), unit: '%', status: 'on-track' as const },
+    hydrogenPurity: { current: getKPIValue('Hydrogen Purity', 'PEM Stack Performance') || (hasData ? 99.999 : 0), target: getKPITarget('Hydrogen Purity', 'PEM Stack Performance') || (hasData ? 99.99 : 0), unit: '%', status: 'exceeded' as const },
+    operatingPressure: { current: getKPIValue('Operating Pressure', 'PEM Stack Performance') || (hasData ? 15 : 0), target: getKPITarget('Operating Pressure', 'PEM Stack Performance') || (hasData ? 10 : 0), unit: 'bar', status: 'on-track' as const },
     performanceRadarData: hasData ? [
-      { metric: 'Efficiency', target: 48, actual: 42 },
-      { metric: 'Voltage Eff.', target: 95, actual: 91 },
-      { metric: 'Degradation', target: 0.5, actual: 0 },
-      { metric: 'Purity', target: 99.99, actual: 99.999 },
-      { metric: 'Pressure', target: 10, actual: 15 },
+      { metric: 'Efficiency', target: 48, actual: getKPIValue('Stack Efficiency', 'PEM Stack Performance') || 42 },
+      { metric: 'Voltage Eff.', target: 95, actual: getKPIValue('Voltage Efficiency', 'PEM Stack Performance') || 91 },
+      { metric: 'Degradation', target: 0.5, actual: getKPIValue('Degradation Rate', 'PEM Stack Performance') || 0 },
+      { metric: 'Purity', target: 99.99, actual: getKPIValue('Hydrogen Purity', 'PEM Stack Performance') || 99.999 },
+      { metric: 'Pressure', target: 10, actual: getKPIValue('Operating Pressure', 'PEM Stack Performance') || 15 },
     ] : [],
-    manufacturingRamp: { built: hasData ? 5 : 0, target: hasData ? 11 : 0 },
-    manufacturingYield: hasData ? 100 : 0,
+    manufacturingRamp: { built: getKPIValue('Commercial Systems Built', 'Manufacturing') || (hasData ? 5 : 0), target: getKPITarget('Commercial Systems Built', 'Manufacturing') || (hasData ? 11 : 0) },
+    manufacturingYield: getKPIValue('Manufacturing Yield', 'Manufacturing') || (hasData ? 100 : 0),
     costPerKw: hasData ? 'Tracking in progress' : '-',
     deliveryTrendData: hasData ? [
       { month: 'Jan', target: 1, actual: 0 },
@@ -254,10 +268,10 @@ export default function ProductDashboard() {
 
   // AEM 5kW - Technology Feasibility
   const aem5kwData = {
-    stackEfficiency: { current: hasData ? 65.75 : 0, target: hasData ? 60 : 0, unit: 'kWh/kg', status: 'blocked' as const },
-    currentDensity: { current: hasData ? 0.7 : 0, target: hasData ? 0.8 : 0, unit: 'A/cm²', status: 'at-risk' as const },
-    operatingPressure: { current: hasData ? 1 : 0, target: hasData ? 5 : 0, unit: 'bar', status: 'blocked' as const },
-    costPerKw: { current: hasData ? 1126 : 0, target: hasData ? 1000 : 0, unit: '$' },
+    stackEfficiency: { current: getKPIValue('Stack Efficiency', 'AEM Stack') || (hasData ? 65.75 : 0), target: getKPITarget('Stack Efficiency', 'AEM Stack') || (hasData ? 60 : 0), unit: 'kWh/kg', status: 'blocked' as const },
+    currentDensity: { current: getKPIValue('Current Density', 'AEM Stack') || (hasData ? 0.7 : 0), target: getKPITarget('Current Density', 'AEM Stack') || (hasData ? 0.8 : 0), unit: 'A/cm²', status: 'at-risk' as const },
+    operatingPressure: { current: getKPIValue('Operating Pressure', 'AEM Stack') || (hasData ? 1 : 0), target: getKPITarget('Operating Pressure', 'AEM Stack') || (hasData ? 5 : 0), unit: 'bar', status: 'blocked' as const },
+    costPerKw: { current: getKPIValue('Manufacturing Cost', 'AEM Stack') || (hasData ? 1126 : 0), target: getKPITarget('Manufacturing Cost', 'AEM Stack') || (hasData ? 1000 : 0), unit: '$' },
     baselineTracker: hasData ? [
       { name: 'Degradation protocol', status: 'not-established' as const },
       { name: 'Purity baseline', status: 'not-established' as const },

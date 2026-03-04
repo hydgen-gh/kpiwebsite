@@ -405,10 +405,33 @@ function MilestoneChip({ region, status }: MilestoneChipProps) {
 // ============================================================================
 
 export default function ExecutiveSalesPerformance() {
-  const { selectedMonths } = useKPI();
+  const { selectedMonths, comprehensiveKPIData } = useKPI();
   const { getMonthDisplay } = useDashboardFilter();
   const [viewMode, setViewMode] = useState<ViewMode>('bd-india');
-  const currentData = viewMode === 'bd-india' ? BD_INDIA_DATA : BD_MENA_DATA;
+  
+  // Filter Sales KPIs from comprehensive data
+  const salesKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Sales');
+  
+  // Helper to get KPI value
+  const getKPIValue = (name: string): number | null => {
+    const kpi = salesKPIs.find((k) => k.kpi_name === name);
+    return kpi?.current_month_actual || null;
+  };
+  
+  const getKPITarget = (name: string): number | null => {
+    const kpi = salesKPIs.find((k) => k.kpi_name === name);
+    return kpi?.current_month_target || null;
+  };
+  
+  // Use real data if available, otherwise fall back to static data
+  const currentData = viewMode === 'bd-india' 
+    ? { ...BD_INDIA_DATA, heroKPIs: [
+        { ...BD_INDIA_DATA.heroKPIs[0], actual: getKPIValue('Commercial Systems Delivered') || BD_INDIA_DATA.heroKPIs[0].actual, target: getKPITarget('Commercial Systems Delivered') || BD_INDIA_DATA.heroKPIs[0].target },
+        { ...BD_INDIA_DATA.heroKPIs[1], actual: getKPIValue('On-time Delivery') || BD_INDIA_DATA.heroKPIs[1].actual },
+        { ...BD_INDIA_DATA.heroKPIs[2], actual: getKPIValue('First-time Acceptance') || BD_INDIA_DATA.heroKPIs[2].actual }
+      ]}
+    : BD_MENA_DATA;
+  
   const isBDIndiaView = viewMode === 'bd-india';
   const isBDMenaView = viewMode === 'bd-mena';
 

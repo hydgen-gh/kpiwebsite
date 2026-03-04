@@ -16,27 +16,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check auth state on mount
+  // Set up auth listener on mount - handles both initial session check and state changes
   useEffect(() => {
     let isMounted = true;
     let timeoutId: NodeJS.Timeout | null = null;
     let subscription: any = null;
 
-    const initAuth = async () => {
+    const checkInitialSession = async () => {
       try {
-        console.log('Checking auth state on mount');
+        console.log('🔍 Checking initial session');
         const currentUser = await authService.getCurrentUser();
         if (isMounted) {
-          console.log('Auth check complete, user:', currentUser);
+          console.log('✅ Initial session check complete:', currentUser?.email || 'No user', '| Role:', currentUser?.role);
           setUser(currentUser);
+          setLoading(false);
         }
       } catch (error) {
-        console.error('Auth check error:', error);
+        console.error('❌ Initial session check error:', error);
         if (isMounted) {
           setUser(null);
-        }
-      } finally {
-        if (isMounted) {
           setLoading(false);
         }
       }
@@ -44,31 +42,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const setupAuthListener = () => {
       try {
-        console.log('Setting up auth listener');
+        console.log('🎧 Setting up auth listener in context');
         subscription = authService.onAuthStateChange((updatedUser) => {
           if (isMounted) {
-            console.log('Auth state changed, user:', updatedUser);
+            console.log('📢 Auth context callback fired:', updatedUser?.email, '| Role:', updatedUser?.role, '| Is Admin?', updatedUser?.role === 'admin');
             setUser(updatedUser);
           }
         });
       } catch (error) {
-        console.error('Auth listener setup error:', error);
+        console.error('❌ Auth listener setup error:', error);
         if (isMounted) {
           setLoading(false);
         }
       }
     };
 
-    // Set a timeout to ensure loading state is cleared after 5 seconds max
+    // Set a timeout to ensure loading state is cleared after 3 seconds max
     timeoutId = setTimeout(() => {
-      if (isMounted) {
+      if (isMounted && loading) {
         console.warn('Auth check timeout, clearing loading state');
         setLoading(false);
       }
-    }, 5000);
+    }, 3000);
 
-    // Start auth initialization
-    initAuth();
+    // Check initial session and set up listener
+    checkInitialSession();
     setupAuthListener();
 
     return () => {
@@ -91,7 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Starting signIn for:', email);
       const response = await authService.signIn(email, password);
-      console.log('SignIn response:', response);
       
       const { error, data } = response;
       if (error) {
@@ -104,22 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       console.log('SignIn successful, session created for:', data.session.user.email);
-      // Get user immediately with timeout - but don't block signin
-      const timeoutPromise = new Promise<AuthUser | null>((resolve) =>
-        setTimeout(() => {
-          console.warn('User fetch timeout, using session user');
-          resolve({
-            id: data.session.user.id,
-            email: data.session.user.email || '',
-            role: 'user' as const,
-          });
-        }, 2000)
-      );
-
-      const userPromise = authService.getCurrentUser();
-      const currentUser = await Promise.race([userPromise, timeoutPromise]);
-      console.log('Current user:', currentUser);
-      setUser(currentUser);
+      // Auth state listener will handle setting the user and clearing loading state
     } catch (err: any) {
       console.error('SignIn exception:', err);
       throw new Error(err.message || 'Login failed');

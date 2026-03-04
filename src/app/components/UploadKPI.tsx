@@ -7,7 +7,7 @@ import { FULL_MONTHS } from '../../lib/quarterUtils';
 import { downloadExcelTemplate } from '../../lib/excelTemplateGenerator';
 
 const DEPARTMENT_SHEETS = ['Product', 'Sales', 'Marketing', 'RnD', 'Finance'];
-const REQUIRED_COLUMNS = ['kpi_name', 'current_month', 'current_month_actual', 'category'];
+const REQUIRED_COLUMNS = ['KPI Name', 'Category', 'Actual (Q4)'];
 
 interface SheetUploadResult {
   department: string;
@@ -21,36 +21,48 @@ interface ParsedKPIData {
   kpi_name: string;
   category: string;
   
-  // Current period
-  current_month: string;
-  current_month_target: number;
-  current_month_actual: number;
+  // Tracking scorecard format
+  sn?: number;
+  target_quarter?: number;
+  actual_qtd?: number;
+  target_q4?: number;
+  actual_jan?: number;
+  actual_feb?: number;
+  actual_mar?: number;
+  actual_q4?: number;
+  progress?: string; // R (Red), Y (Yellow), G (Green)
+  commentary?: string;
   
-  // MoM comparison
+  // Current period (for backward compatibility)
+  current_month?: string;
+  current_month_target?: number;
+  current_month_actual?: number;
+  
+  // MoM comparison (for backward compatibility)
   previous_month?: string;
   previous_month_actual?: number;
   mom_pct_change?: number;
   
-  // Current quarter
+  // Current quarter (for backward compatibility)
   current_quarter?: string;
   current_quarter_target?: number;
   current_quarter_actual?: number;
   
-  // QoQ comparison
+  // QoQ comparison (for backward compatibility)
   previous_quarter?: string;
   previous_quarter_actual?: number;
   qoq_pct_change?: number;
   
-  // YoY comparison
+  // YoY comparison (for backward compatibility)
   same_month_prior_year_actual?: number;
   yoy_pct_change?: number;
   
   // Utility fields
-  financial_year: string;
-  quarter: string; // For backward compatibility
-  month: string; // For backward compatibility
-  target: number; // For backward compatibility
-  actual: number; // For backward compatibility
+  financial_year?: string;
+  quarter?: string;
+  month?: string;
+  target?: number;
+  actual?: number;
 }
 
 export default function UploadKPI() {
@@ -109,7 +121,7 @@ export default function UploadKPI() {
                 sheetName.toLowerCase().includes(dept.toLowerCase())
               ) || sheetName;
 
-              // Map data with new template structure
+              // Map data with tracking scorecard structure
               const kpiData: ParsedKPIData[] = jsonData.map((row: any) => {
                 // Helper function to normalize column names (handle both cases)
                 const getCol = (names: string[]): any => {
@@ -121,9 +133,6 @@ export default function UploadKPI() {
                   return undefined;
                 };
 
-                const currentMonth = getCol(['Current Month', 'current_month']) || 'Unknown';
-                const fullMonth = FULL_MONTHS.find(m => m.toLowerCase() === currentMonth.toString().toLowerCase()) || currentMonth;
-
                 // Parse numeric values
                 const parseNum = (val: any): number => {
                   if (!val && val !== 0) return 0;
@@ -131,46 +140,52 @@ export default function UploadKPI() {
                   return isNaN(num) ? 0 : num;
                 };
 
-                // Build backward-compatible fields
-                const currentMonthActual = parseNum(getCol(['Current Month Actual', 'current_month_actual'])) || 0;
-                const currentQuarter = getCol(['Current Quarter', 'current_quarter']) || 'Q4';
-                const currentQuarterActual = parseNum(getCol(['Current Quarter Actual', 'current_quarter_actual'])) || 0;
+                // Extract tracking scorecard columns
+                const sn = parseNum(getCol(['S/N', 's/n', 'sn']));
+                const kpiName = getCol(['KPI Name', 'kpi_name', 'KPI']) || 'Unknown';
+                const category = getCol(['Category', 'category']) || 'Uncategorized';
+                const targetQuarter = parseNum(getCol(['Target (Quarter)', 'target_quarter', 'Target (Quarter)']));
+                const actualQtd = parseNum(getCol(['Actual (QTD)', 'actual_qtd', 'Actual (QTD)']));
+                const targetQ4 = parseNum(getCol(['Target (Q4)', 'target_q4', 'Target (Q4)']));
+                const actualJan = parseNum(getCol(['Actual (Jan)', 'actual_jan', 'Actual (Jan)']));
+                const actualFeb = parseNum(getCol(['Actual (Feb)', 'actual_feb', 'Actual (Feb)']));
+                const actualMar = parseNum(getCol(['Actual (Mar)', 'actual_mar', 'Actual (Mar)']));
+                const actualQ4 = parseNum(getCol(['Actual (Q4)', 'actual_q4', 'Actual (Q4)']));
+                const progress = getCol(['Progress (R/Y/G)', 'progress', 'Progress (R/Y/G)']) || '';
+                const commentary = getCol(['Commentary', 'commentary', 'Commentary']) || '';
 
+                // Build record with tracking format
                 const record: ParsedKPIData = {
                   department,
-                  kpi_name: getCol(['KPI Name', 'kpi_name', 'KPI Name']).toString().trim(),
-                  category: getCol(['Category', 'category', 'Category']).toString().trim(),
+                  kpi_name: kpiName.toString().trim(),
+                  category: category.toString().trim(),
                   
-                  // Current period
-                  current_month: fullMonth,
-                  current_month_target: parseNum(getCol(['Current Month Target', 'current_month_target'])),
-                  current_month_actual: currentMonthActual,
+                  // Tracking scorecard format
+                  sn,
+                  target_quarter: targetQuarter,
+                  actual_qtd: actualQtd,
+                  target_q4: targetQ4,
+                  actual_jan: actualJan,
+                  actual_feb: actualFeb,
+                  actual_mar: actualMar,
+                  actual_q4: actualQ4,
+                  progress: progress.toString().toUpperCase().trim(),
+                  commentary: commentary.toString().trim(),
                   
-                  // MoM comparison
-                  previous_month: getCol(['Previous Month', 'previous_month']).toString().trim(),
-                  previous_month_actual: parseNum(getCol(['Previous Month Actual', 'previous_month_actual'])),
-                  mom_pct_change: parseNum(getCol(['MoM % Change', 'mom_pct_change'])),
+                  // Backward compatibility: use Q4 as default quarter
+                  current_month: 'March', // Last month of Q4
+                  current_month_actual: actualQ4,
+                  current_month_target: targetQ4,
+                  current_quarter: 'Q4',
+                  current_quarter_actual: actualQ4,
+                  current_quarter_target: targetQ4,
                   
-                  // Current quarter
-                  current_quarter: currentQuarter,
-                  current_quarter_target: parseNum(getCol(['Current Quarter Target', 'current_quarter_target'])),
-                  current_quarter_actual: currentQuarterActual,
-                  
-                  // QoQ comparison
-                  previous_quarter: getCol(['Previous Quarter', 'previous_quarter']).toString().trim(),
-                  previous_quarter_actual: parseNum(getCol(['Previous Quarter Actual', 'previous_quarter_actual'])),
-                  qoq_pct_change: parseNum(getCol(['QoQ % Change', 'qoq_pct_change'])),
-                  
-                  // YoY comparison
-                  same_month_prior_year_actual: parseNum(getCol(['Same Month Prior Year Actual', 'same_month_prior_year_actual'])),
-                  yoy_pct_change: parseNum(getCol(['YoY % Change', 'yoy_pct_change'])),
-                  
-                  // Utility fields for backward compatibility
-                  financial_year: getCol(['Financial Year', 'financial_year']).toString().trim() || 'FY 2026',
-                  quarter: getQuarterFromMonth(fullMonth),
-                  month: fullMonth,
-                  target: parseNum(getCol(['Current Month Target', 'current_month_target'])),
-                  actual: currentMonthActual,
+                  // Utility fields
+                  financial_year: 'FY 2026',
+                  quarter: 'Q4',
+                  month: 'March',
+                  target: targetQ4,
+                  actual: actualQ4,
                 };
 
                 return record;
@@ -214,12 +229,11 @@ export default function UploadKPI() {
           continue;
         }
 
-        // Validate required fields (new template)
+        // Validate required fields (tracking scorecard format)
         const validData = data.filter(item =>
           item.kpi_name && 
-          item.current_month && 
-          item.current_month_actual !== undefined &&
-          item.current_month_actual !== null
+          item.category && 
+          (item.actual_q4 !== undefined && item.actual_q4 !== null)
         );
 
         if (validData.length === 0) {

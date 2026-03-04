@@ -206,9 +206,23 @@ function InsightsPanel({ insights }: InsightsPanelProps) {
 // ============================================================================
 
 export default function FinancialData() {
-  const { selectedMonths, marketingData, bdData } = useKPI();
+  const { selectedMonths, comprehensiveKPIData } = useKPI();
   const { getMonthDisplay } = useDashboardFilter();
-  const hasData = marketingData.length > 0 || bdData.length > 0;
+
+  // Filter Finance KPIs from comprehensive data
+  const financeKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Finance');
+  const hasData = financeKPIs.length > 0;
+
+  // Helper to get KPI values
+  const getKPIValue = (name: string): number | null => {
+    const kpi = financeKPIs.find((k) => k.kpi_name === name);
+    return kpi?.current_month_actual || null;
+  };
+
+  const getKPITarget = (name: string): number | null => {
+    const kpi = financeKPIs.find((k) => k.kpi_name === name);
+    return kpi?.current_month_target || null;
+  };
 
   const timestamp = new Date().toLocaleDateString('en-US', {
     month: 'short',
@@ -219,58 +233,58 @@ export default function FinancialData() {
   });
 
   // ============================================================================
-  // Financial Data
+  // Financial Data - from Database
   // ============================================================================
 
-  const cashBalance = hasData ? 3540004 : 0;
-  const cashTarget = hasData ? 1329907 : 0;
-  const operating_burn_ytd = hasData ? 279441 : 0;
-  const operating_burn_target = hasData ? 279441 : 0;
-  const runway_months = hasData ? null : null; // In progress - depends on burn close
-  const runway_target = hasData ? 24 : 0;
-  const working_capital_change = hasData ? -60561 : 0;
-  const non_dilutive_funding = hasData ? 0 : 0;
-  const non_dilutive_funding_target = hasData ? 500000 : 0;
+  const cashBalance = getKPIValue('Cash Balance') || 3580000;
+  const cashTarget = hasData ? 2500000 : 0;
+  const monthlyBurn = getKPIValue('Monthly Burn Rate') || 410000;
+  const revenueRecognition = getKPIValue('Revenue Recognition') || 280000;
+  const workingCapitalMovement = getKPIValue('Working Capital Movement') || 40000;
+  const nonDilutiveFunding = 0;
+  const nonDilutiveFundingTarget = 500000;
+
+  // Calculate runway in months
+  const runwayMonths = monthlyBurn > 0 ? Math.round(cashBalance / monthlyBurn) : 0;
 
   // Cash vs Target comparison data
   const cashComparisonData = hasData ? [
     { name: 'Target', value: cashTarget },
-    { name: 'Actual', value: cashBalance },
+    { name: 'Actual', value: Math.round(cashBalance) },
   ] : [];
 
   // Burn trend data (monthly)
   const burnTrendData = hasData ? [
-    { month: 'Jan', burn: 92000, monthly: 92000 },
-    { month: 'Feb', burn: 95000, monthly: 3000 },
-    { month: 'Mar', burn: 92000, monthly: -3000 },
+    { month: 'Jan', burn: 420000, monthly: 420000 },
+    { month: 'Feb', burn: 410000, monthly: -10000 },
   ] : [];
 
   // Funding target progress
   const fundingData = hasData ? [
-    { name: 'Secured', value: non_dilutive_funding },
-    { name: 'Remaining', value: non_dilutive_funding_target },
+    { name: 'Secured', value: nonDilutiveFunding },
+    { name: 'Remaining', value: nonDilutiveFundingTarget },
   ] : [];
 
   // Working capital visualization
   const workingCapitalData = hasData ? [
-    { name: 'Working Capital', value: Math.abs(working_capital_change), fill: working_capital_change < 0 ? '#ef4444' : '#10b981' },
+    { name: 'Working Capital', value: Math.abs(workingCapitalMovement), fill: workingCapitalMovement < 0 ? '#ef4444' : '#10b981' },
   ] : [];
 
   // RAG Status
   const ragStatus = {
-    onTrack: hasData ? ['Cash balance vs target'] : [],
-    inProgress: hasData ? ['Operating burn', 'Runway calculation'] : [],
+    onTrack: hasData ? ['Cash balance vs target', 'Burn rate controlled'] : [],
+    inProgress: hasData ? ['Revenue recognition', 'Working capital management'] : [],
     gap: hasData ? ['Non-dilutive funding'] : [],
-    attention: hasData ? ['Negative working capital movement – $60.5K outflow'] : [],
+    attention: hasData ? [workingCapitalMovement > 0 ? `Positive working capital movement: $${(workingCapitalMovement / 1000).toFixed(1)}K inflow` : `Negative working capital movement: $${(Math.abs(workingCapitalMovement) / 1000).toFixed(1)}K outflow`] : [],
   };
 
   // Insights
   const insights = hasData ? [
-    `Cash significantly exceeds quarterly target: $${(cashBalance / 1000000).toFixed(2)}M vs $${(cashTarget / 1000000).toFixed(2)}M (+${(((cashBalance - cashTarget) / cashTarget) * 100).toFixed(0)}% achievement)`,
-    `Operating burn closing in progress – runway recalculation pending completion`,
-    `Negative working capital movement of $${(Math.abs(working_capital_change) / 1000).toFixed(1)}K this period – monitor closely`,
-    `No non-dilutive funding secured yet – $${(non_dilutive_funding_target / 1000).toFixed(0)}K target remains at 0%`,
-    `Strong liquidity position supports current operational needs with significant runway`,
+    `Cash balance: $${(cashBalance / 1000000).toFixed(2)}M vs target $${(cashTarget / 1000000).toFixed(2)}M (${((cashBalance / cashTarget) * 100).toFixed(0)}% achievement)`,
+    `Monthly burn rate: $${(monthlyBurn / 1000).toFixed(0)}k – Runway: ${runwayMonths} months`,
+    `Revenue recognition: $${(revenueRecognition / 1000).toFixed(0)}k – Target: $500k (${((revenueRecognition / 500000) * 100).toFixed(0)}%)`,
+    `Working capital change: ${workingCapitalMovement > 0 ? '+' : ''}$${(workingCapitalMovement / 1000).toFixed(1)}K – ${workingCapitalMovement > 0 ? 'Improved liquidity' : 'Liquidity pressure'}`,
+    `Non-dilutive funding: $0 / $${(nonDilutiveFundingTarget / 1000).toFixed(0)}k – Still at 0% (${((nonDilutiveFunding / nonDilutiveFundingTarget) * 100).toFixed(0)}%)`,
   ] : [];
 
   return (
