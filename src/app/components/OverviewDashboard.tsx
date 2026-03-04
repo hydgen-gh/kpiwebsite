@@ -93,7 +93,7 @@ export default function OverviewDashboard() {
       target: '$500k',
       unit: '',
       status: revenueRecognized >= 400000 ? 'on-track' as const : 'at-risk' as const,
-      delta: hasData ? `${((revenueRecognized / 500000) * 100).toFixed(0)}%` : '-',
+      delta: hasData ? `-` : '-',
       icon: DollarSign,
     },
     {
@@ -111,7 +111,7 @@ export default function OverviewDashboard() {
       target: '5',
       unit: 'units',
       status: systemsDelivered >= 3 ? 'on-track' as const : 'at-risk' as const,
-      delta: hasData ? `${((systemsDelivered / 5) * 100).toFixed(0)}%` : '-',
+      delta: hasData ? `-` : '-',
       icon: Rocket,
     },
     {
@@ -120,7 +120,7 @@ export default function OverviewDashboard() {
       target: '100%',
       unit: '',
       status: onTimeDelivery >= 80 ? 'on-track' as const : 'at-risk' as const,
-      delta: hasData ? `${onTimeDelivery < 100 ? '-' : '+'}${Math.abs(100 - onTimeDelivery).toFixed(0)}%` : '-',
+      delta: hasData ? `-` : '-',
       icon: Target,
     },
   ];
@@ -218,7 +218,6 @@ export default function OverviewDashboard() {
 
           <div className="mb-3">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-2xl font-bold text-slate-900">{outcome.current}%</span>
               <span className="text-xs font-semibold px-2 py-1 rounded" style={{ backgroundColor: statusColors[outcome.status as keyof typeof statusColors] + '20', color: statusColors[outcome.status as keyof typeof statusColors] }}>
                 {outcome.status === 'on-track' ? 'On Track' : outcome.status === 'at-risk' ? 'At Risk' : 'In Progress'}
               </span>
