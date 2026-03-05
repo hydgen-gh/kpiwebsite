@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, CheckCircle, AlertCircle, Loader, FileCheck, Download } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader, FileCheck, Download, Calendar, Share2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useKPI } from '../kpi/KPIContext';
 import * as XLSX from 'xlsx';
@@ -399,6 +399,35 @@ export default function UploadKPI() {
       <div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Upload KPI Data</h2>
         <p className="text-slate-600">Upload an Excel file with multiple sheets for all departments</p>
+      </div>
+
+      {/* Monthly Upload Info Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Monthly Upload Box */}
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-5 border border-emerald-200">
+          <div className="flex items-start gap-3 mb-2">
+            <Calendar className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-slate-900">Monthly Data Upload</h3>
+              <p className="text-xs text-slate-600 mt-1">
+                Department heads can upload monthly KPI values separately for January and February, keeping track of individual month performance.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* SharePoint Access Box */}
+        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-5 border border-blue-200">
+          <div className="flex items-start gap-3 mb-2">
+            <Share2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-slate-900">SharePoint Integration</h3>
+              <p className="text-xs text-slate-600 mt-1">
+                This dashboard will sync with your SharePoint folder for easy file sharing and version control. Coming soon.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Download Template Section */}

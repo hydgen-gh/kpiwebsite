@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Target } from 'lucide-react';
+import { Target, Zap, Link2 } from 'lucide-react';
 import { EmptyState } from './EmptyState';
 import { FilterStatusBadge } from './FilterStatusBadge';
 import { DefinitionsSection } from './DefinitionsSection';
@@ -207,6 +207,83 @@ export default function MarketingDashboard() {
           <div>
             <h2 className="text-lg font-bold text-slate-900 mb-4">Status Overview</h2>
             <RAGBand data={ragStatus} />
+          </div>
+
+          {/* ===== API INTEGRATIONS ===== */}
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-cyan-600" />
+              Analytics API Integrations
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Google Analytics */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="font-semibold text-slate-900">Google Analytics 4</h3>
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">Ready</span>
+                </div>
+                <p className="text-sm text-slate-600 mb-4">
+                  Website traffic, user behavior, and conversion funnel data
+                </p>
+                <div className="space-y-2 text-xs text-slate-600 mb-4">
+                  <div>✓ Page views</div>
+                  <div>✓ User sessions</div>
+                  <div>✓ Conversion rates</div>
+                </div>
+                <button className="w-full px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm font-medium transition">
+                  Connect API
+                </button>
+              </div>
+
+              {/* HubSpot */}
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="font-semibold text-slate-900">HubSpot CRM</h3>
+                  <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded">Ready</span>
+                </div>
+                <p className="text-sm text-slate-600 mb-4">
+                  Lead data, company information, and contact interactions
+                </p>
+                <div className="space-y-2 text-xs text-slate-600 mb-4">
+                  <div>✓ Lead scoring</div>
+                  <div>✓ Conversion pipeline</div>
+                  <div>✓ Deal tracking</div>
+                </div>
+                <button className="w-full px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-sm font-medium transition">
+                  Connect API
+                </button>
+              </div>
+
+              {/* LinkedIn Analytics */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="font-semibold text-slate-900">LinkedIn Analytics</h3>
+                  <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">Ready</span>
+                </div>
+                <p className="text-sm text-slate-600 mb-4">
+                  LinkedIn campaign performance and audience engagement metrics
+                </p>
+                <div className="space-y-2 text-xs text-slate-600 mb-4">
+                  <div>✓ Campaign metrics</div>
+                  <div>✓ Engagement data</div>
+                  <div>✓ Lead gen forms</div>
+                </div>
+                <button className="w-full px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded text-sm font-medium transition">
+                  Connect API
+                </button>
+              </div>
+            </div>
+
+            {/* Integration Status */}
+            <div className="mt-4 bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <div className="flex items-center gap-3 text-sm">
+                <Zap className="w-5 h-5 text-amber-500" />
+                <div>
+                  <p className="font-medium text-slate-900">Auto-Population Ready</p>
+                  <p className="text-xs text-slate-600">Once APIs are connected, inbound leads will auto-populate daily without manual updates</p>
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}

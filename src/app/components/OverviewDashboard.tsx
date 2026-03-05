@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TrendingUp, Target, Zap, AlertTriangle, CheckCircle2, DollarSign, Rocket, MapPin, TrendingDown, Fuel, Lightbulb, Upload } from 'lucide-react';
+import { TrendingUp, Target, Zap, AlertTriangle, CheckCircle2, DollarSign, Rocket, MapPin, TrendingDown, Fuel, Lightbulb, Upload, Award, Bell } from 'lucide-react';
 import { useKPI, getQuarterFromMonths } from '../kpi/KPIContext';
 import { useDashboardFilter } from '../../lib/dashboardFilterUtils';
 import { FilterStatusBadge } from './FilterStatusBadge';
 import { EmptyState } from './EmptyState';
+import { GrantTrackingSection } from './GrantTrackingSection';
+import { OperationalImprovements } from './OperationalImprovements';
 import { LABELS } from '../../config/labels';
 
 export default function OverviewDashboard() {
@@ -82,6 +84,23 @@ export default function OverviewDashboard() {
   // Calculate cash runway
   const monthlyBurnRate = getKPIValue(financeKPIs, 'Monthly Burn Rate') || 410000;
   const cashRunway = monthlyBurnRate > 0 ? Math.round(cashBalance / monthlyBurnRate) : 0;
+
+  // ========================================================================
+  // FY2026 BUDGET & RUNWAY SECTION (Dynamic Placeholders)
+  // ========================================================================
+  const budgetMetrics = {
+    currentCashBalance: 0, // Dynamic placeholder - will connect to backend
+    regionalCashTracking: {
+      us: 0,
+      emea: 0,
+      apac: 0,
+      other: 0,
+    },
+    quarterlyBurnRate: 0, // Dynamic placeholder
+    annualBurnRate: 0, // Dynamic placeholder
+    runwayProjection: 0, // Dynamic placeholder in months
+    currentMonth: new Date().toLocaleString('en-US', { month: 'long' }),
+  };
 
   // ========================================================================
   // COMPANY PERFORMANCE SNAPSHOT (Hero KPIs)
@@ -333,95 +352,147 @@ export default function OverviewDashboard() {
   // 5. CAPITAL DEPLOYMENT (Enhanced)
   const renderCapitalDeployment = () => (
     <div className="bg-white rounded-lg border border-slate-200 p-6">
-      <h3 className="font-semibold text-slate-900 mb-6">Capital Efficiency & Deployment</h3>
-      <div className="grid grid-cols-2 gap-6">
-        {/* Left: Donut Chart */}
-        <div>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={fundAllocationData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {fundAllocationData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={FUND_COLORS[index]} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-2 mt-4">
-            {fundAllocationData.map((item, index) => (
-              <div key={index} className="flex items-center gap-2 text-xs">
-                <div 
-                  className="w-2.5 h-2.5 rounded-sm flex-shrink-0" 
-                  style={{ backgroundColor: FUND_COLORS[index] }}
-                />
-                <div className="flex-1 flex items-center justify-between">
-                  <span className="text-slate-700">{item.name}</span>
-                  <span className="font-bold text-slate-900">{item.percentage}%</span>
-                </div>
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-slate-900 mb-4">FY2026 Budget & Runway</h3>
+        
+        {/* Budget Overview Cards */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
+            <p className="text-xs text-slate-600 font-medium mb-2">Current Cash Balance</p>
+            <p className="text-2xl font-bold text-slate-900">{budgetMetrics.currentCashBalance === 0 ? '-' : `$${(budgetMetrics.currentCashBalance / 1000000).toFixed(2)}M`}</p>
+            <p className="text-xs text-slate-500 mt-1">Primary Account</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-lg p-4 border border-teal-200">
+            <p className="text-xs text-slate-600 font-medium mb-2">Quarterly Burn Rate</p>
+            <p className="text-2xl font-bold text-slate-900">{budgetMetrics.quarterlyBurnRate === 0 ? '-' : `$${(budgetMetrics.quarterlyBurnRate / 1000000).toFixed(2)}M`}</p>
+            <p className="text-xs text-slate-500 mt-1">Average</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border border-amber-200">
+            <p className="text-xs text-slate-600 font-medium mb-2">Annual Burn Rate</p>
+            <p className="text-2xl font-bold text-slate-900">{budgetMetrics.annualBurnRate === 0 ? '-' : `$${(budgetMetrics.annualBurnRate / 1000000).toFixed(2)}M`}</p>
+            <p className="text-xs text-slate-500 mt-1">Projected</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-200">
+            <p className="text-xs text-slate-600 font-medium mb-2">Runway Projection</p>
+            <p className="text-2xl font-bold text-slate-900">{budgetMetrics.runwayProjection === 0 ? '-' : `${budgetMetrics.runwayProjection} mo`}</p>
+            <p className="text-xs text-slate-500 mt-1">At Current Rate</p>
+          </div>
+        </div>
+
+        {/* Regional Cash Distribution */}
+        <div className="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200">
+          <h4 className="text-sm font-medium text-slate-900 mb-3">Regional Cash Tracking</h4>
+          <div className="grid grid-cols-4 gap-4">
+            {[
+              { name: 'US', value: budgetMetrics.regionalCashTracking.us },
+              { name: 'EMEA', value: budgetMetrics.regionalCashTracking.emea },
+              { name: 'APAC', value: budgetMetrics.regionalCashTracking.apac },
+              { name: 'Other', value: budgetMetrics.regionalCashTracking.other },
+            ].map((region) => (
+              <div key={region.name} className="text-center">
+                <p className="text-xs text-slate-600 mb-1">{region.name}</p>
+                <p className="text-lg font-bold text-slate-900">{region.value === 0 ? '-' : `$${(region.value / 1000000).toFixed(1)}M`}</p>
               </div>
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Right: Burn vs Plan + Runway */}
-        <div className="space-y-6">
-          {/* Burn vs Plan */}
+      {/* Original Capital Allocation (only show if data exists) */}
+      {fundAllocationData.length > 0 && (
+        <div className="grid grid-cols-2 gap-6">
+          {/* Left: Donut Chart */}
           <div>
-            <h4 className="text-sm font-medium text-slate-900 mb-3">Burn Rate vs Plan</h4>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-600">Monthly Burn</span>
-                  <span className="font-bold text-slate-900">${(capitalMetrics.burnRate / 1000000).toFixed(2)}M</span>
-                </div>
-                <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500" style={{ width: '70%' }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-600">Budget Utilized</span>
-                  <span className="font-bold text-slate-900">{Math.round((capitalMetrics.spent / capitalMetrics.totalBudget) * 100)}%</span>
-                </div>
-                <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+            <h4 className="text-sm font-medium text-slate-900 mb-4">Capital Efficiency & Deployment</h4>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={fundAllocationData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {fundAllocationData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={FUND_COLORS[index]} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-2 mt-4">
+              {fundAllocationData.map((item, index) => (
+                <div key={index} className="flex items-center gap-2 text-xs">
                   <div 
-                    className="h-full bg-teal-500" 
-                    style={{ width: `${(capitalMetrics.spent / capitalMetrics.totalBudget) * 100}%` }} 
+                    className="w-2.5 h-2.5 rounded-sm flex-shrink-0" 
+                    style={{ backgroundColor: FUND_COLORS[index] }}
                   />
+                  <div className="flex-1 flex items-center justify-between">
+                    <span className="text-slate-700">{item.name}</span>
+                    <span className="font-bold text-slate-900">{item.percentage}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Burn vs Plan + Runway */}
+          <div className="space-y-6">
+            {/* Burn vs Plan */}
+            <div>
+              <h4 className="text-sm font-medium text-slate-900 mb-3">Burn Rate vs Plan</h4>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-slate-600">Monthly Burn</span>
+                    <span className="font-bold text-slate-900">${(capitalMetrics.burnRate / 1000000).toFixed(2)}M</span>
+                  </div>
+                  <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500" style={{ width: '70%' }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-slate-600">Budget Utilized</span>
+                    <span className="font-bold text-slate-900">{Math.round((capitalMetrics.spent / capitalMetrics.totalBudget) * 100)}%</span>
+                  </div>
+                  <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-teal-500" 
+                      style={{ width: `${(capitalMetrics.spent / capitalMetrics.totalBudget) * 100}%` }} 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Runway Gauge */}
-          <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-slate-900">Liquidity Runway</p>
-              <p className="text-2xl font-bold text-emerald-700">{capitalMetrics.runwayMonths}</p>
+            {/* Runway Gauge */}
+            <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-slate-900">Liquidity Runway</p>
+                <p className="text-2xl font-bold text-emerald-700">{capitalMetrics.runwayMonths}</p>
+              </div>
+              <p className="text-xs text-slate-600">months at current burn rate</p>
+              <div className="h-2 bg-emerald-200 rounded-full overflow-hidden mt-3">
+                <div 
+                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                  style={{ width: `${Math.min((capitalMetrics.runwayMonths / 24) * 100, 100)}%` }}
+                />
+              </div>
             </div>
-            <p className="text-xs text-slate-600">months at current burn rate</p>
-            <div className="h-2 bg-emerald-200 rounded-full overflow-hidden mt-3">
-              <div 
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500"
-                style={{ width: `${Math.min((capitalMetrics.runwayMonths / 24) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
 
-          {/* Remaining Budget */}
-          <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-            <p className="text-xs text-slate-600 mb-1">Remaining Budget</p>
-            <p className="text-2xl font-bold text-slate-900">${(capitalMetrics.remaining / 1000000).toFixed(2)}M</p>
+            {/* Remaining Budget */}
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-xs text-slate-600 mb-1">Remaining Budget</p>
+              <p className="text-2xl font-bold text-slate-900">${(capitalMetrics.remaining / 1000000).toFixed(2)}M</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
@@ -435,7 +506,10 @@ export default function OverviewDashboard() {
       {/* HEADER */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">{LABELS.pageTitles.executive.title}</h2>
+          <div className="flex items-center gap-3 mb-2">
+            <h2 className="text-3xl font-bold text-slate-900">{LABELS.pageTitles.executive.title}</h2>
+            <span className="px-3 py-1 bg-gradient-to-r from-teal-100 to-cyan-100 text-teal-700 text-sm font-bold rounded-full">FY2026</span>
+          </div>
           <p className="text-slate-600">{LABELS.pageTitles.executive.subtitle}</p>
           {selectedMonths.length > 0 && (
             <div className="mt-2 text-sm text-slate-600">
@@ -465,6 +539,15 @@ export default function OverviewDashboard() {
         {renderPerformanceSnapshot()}
       </div>
 
+      {/* 2.5. FY2026 BUDGET & RUNWAY */}
+      <div>
+        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <DollarSign className="w-5 h-5 text-teal-600" />
+          FY2026 Budget & Runway
+        </h3>
+        {renderCapitalDeployment()}
+      </div>
+
       {/* 3. KPI HEALTH STATUS */}
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -474,13 +557,24 @@ export default function OverviewDashboard() {
         {renderKPIHealth()}
       </div>
 
-      {/* 5. CAPITAL DEPLOYMENT */}
+      {/* 4. GRANT TRACKING */}
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-teal-600" />
-          {LABELS.sections.capital}
+          <Award className="w-5 h-5 text-purple-600" />
+          Grant & Accelerator Tracking
         </h3>
-        {renderCapitalDeployment()}
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <GrantTrackingSection />
+        </div>
+      </div>
+
+      {/* 5. OPERATIONAL IMPROVEMENTS */}
+      <div>
+        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <Bell className="w-5 h-5 text-indigo-600" />
+          Operational Improvements & Audit Log
+        </h3>
+        <OperationalImprovements />
       </div>
 
       {/* FOOTER */}
