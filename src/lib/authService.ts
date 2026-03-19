@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Admin email list
 const ADMIN_EMAILS = ['admin@hydgen.com'];
@@ -11,7 +11,9 @@ let supabaseInstance: any = null;
 
 function getSupabaseClient() {
   if (!supabaseInstance) {
-    console.log('Creating Supabase client instance');
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing Supabase credentials! Check .env file');
+    }
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
@@ -40,12 +42,9 @@ export const authService = {
     
     // If sign-in successful, ensure role metadata is set correctly
     if (response.data?.session?.user) {
-      const userId = response.data.session.user.id;
       // Determine role based on admin email list
       const shouldBeAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
       const roleToSet = shouldBeAdmin ? 'admin' : 'user';
-      
-      console.log(`🔐 Sign-in for ${email}: Should be admin? ${shouldBeAdmin}`);
       
       // Update metadata to ensure correct role is set
       const { error } = await supabase.auth.updateUser({
@@ -56,7 +55,6 @@ export const authService = {
       });
       
       if (!error) {
-        console.log(`✓ Metadata updated: ${email} → ${roleToSet}`);
         // Refresh session to get updated metadata
         const { data: refreshed } = await supabase.auth.getSession();
         if (refreshed.session?.user) {
@@ -80,7 +78,6 @@ export const authService = {
         console.error('Error updating user role:', error);
         throw error;
       }
-      console.log('✓ User role updated to:', newRole);
       return true;
     } catch (err) {
       console.error('❌ Exception updating user role:', err);
@@ -89,7 +86,24 @@ export const authService = {
   },
 
   async signOut() {
-    return supabase.auth.signOut();
+    try {
+      const result = await supabase.auth.signOut();
+      // Also clear any localStorage keys that Supabase might have created
+      // This ensures a complete sign-out
+      const keysToDelete = Object.keys(localStorage).filter(key => 
+        key.includes('sb-') || key.includes('supabase') || key.includes('auth')
+      );
+      keysToDelete.forEach(key => localStorage.removeItem(key));
+      return result;
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      // Force clear localStorage even if Supabase signOut fails
+      const keysToDelete = Object.keys(localStorage).filter(key => 
+        key.includes('sb-') || key.includes('supabase') || key.includes('auth')
+      );
+      keysToDelete.forEach(key => localStorage.removeItem(key));
+      throw error;
+    }
   },
 
   // Get user role from metadata (no database query needed)
@@ -99,10 +113,8 @@ export const authService = {
       if (data.session?.user) {
         // Get role from user metadata
         const role = data.session.user.user_metadata?.role || 'user';
-        console.log('✓ Got role from metadata:', role, '| User ID:', userId);
         return role as 'admin' | 'user';
       }
-      console.log('No session found, returning default role: user');
       return 'user';
     } catch (err: any) {
       console.error('❌ Exception fetching user role:', err.message || err);
@@ -130,14 +142,10 @@ export const authService = {
   },
 
   async onAuthStateChange(callback: (user: AuthUser | null) => void) {
-    console.log('🔐 Setting up auth state listener');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
-      console.log('📡 Auth event:', event, '| Email:', session?.user?.email);
-      
       // Only handle actual auth changes (login/logout/update)
       // Skip INITIAL_SESSION as it's handled by checkInitialSession()
       if (event === 'INITIAL_SESSION') {
-        console.log('⏭️ Skipping INITIAL_SESSION - handled by checkInitialSession()');
         return;
       }
       

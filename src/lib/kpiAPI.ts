@@ -52,8 +52,6 @@ export async function fetchKPIsByMonthYear(
   department?: keyof typeof TABLES
 ): Promise<KPI[]> {
   try {
-    console.log(`📊 Fetching KPIs for ${month} ${year}...`);
-
     const allKPIs: KPI[] = [];
     const depts = department ? [department] : (Object.keys(TABLES) as Array<keyof typeof TABLES>);
 
@@ -67,7 +65,6 @@ export async function fetchKPIsByMonthYear(
         .order('kpi_name', { ascending: true });
 
       if (error) {
-        console.warn(`Warning fetching ${dept}:`, error);
         continue;
       }
 
@@ -76,7 +73,6 @@ export async function fetchKPIsByMonthYear(
       }
     }
 
-    console.log(`✓ Fetched ${allKPIs.length} KPIs`);
     return allKPIs;
   } catch (err) {
     console.error(`Exception fetching KPIs:`, err);
@@ -104,7 +100,6 @@ export async function fetchDepartmentKPIsByMonthYear(
       return [];
     }
 
-    console.log(`✓ Fetched ${data?.length || 0} ${department} KPIs`);
     return data || [];
   } catch (err) {
     console.error(`Exception:`, err);

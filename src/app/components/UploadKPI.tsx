@@ -3,11 +3,11 @@ import { Upload, CheckCircle, AlertCircle, Loader, FileCheck, Download, Calendar
 import { supabase } from '../../lib/supabase';
 import { useKPI } from '../kpi/KPIContext';
 import * as XLSX from 'xlsx';
-import { FULL_MONTHS } from '../../lib/quarterUtils';
+
 import { downloadExcelTemplate } from '../../lib/excelTemplateGenerator';
 
 const DEPARTMENT_SHEETS = ['Product', 'Sales', 'Marketing', 'RnD', 'Finance'];
-const REQUIRED_COLUMNS = ['KPI Name', 'Category', 'Actual (Q4)'];
+// const REQUIRED_COLUMNS = ['KPI Name', 'Category', 'Actual (Q4)'];
 
 interface SheetUploadResult {
   department: string;
@@ -76,16 +76,16 @@ export default function UploadKPI() {
   /**
    * Get quarter from month name
    */
-  const getQuarterFromMonth = (month: string): string => {
-    const fullMonth = FULL_MONTHS.find(m => m.toLowerCase() === month.toLowerCase());
-    if (!fullMonth) return 'Q4';
-    
-    if (['January', 'February', 'March'].includes(fullMonth)) return 'Q4';
-    if (['April', 'May', 'June'].includes(fullMonth)) return 'Q1';
-    if (['July', 'August', 'September'].includes(fullMonth)) return 'Q2';
-    if (['October', 'November', 'December'].includes(fullMonth)) return 'Q3';
-    return 'Q4';
-  };
+  // const getQuarterFromMonth = (month: string): string => {
+  //   const fullMonth = FULL_MONTHS.find(m => m.toLowerCase() === month.toLowerCase());
+  //   if (!fullMonth) return 'Q4';
+  //   
+  //   if (['January', 'February', 'March'].includes(fullMonth)) return 'Q4';
+  //   if (['April', 'May', 'June'].includes(fullMonth)) return 'Q1';
+  //   if (['July', 'August', 'September'].includes(fullMonth)) return 'Q2';
+  //   if (['October', 'November', 'December'].includes(fullMonth)) return 'Q3';
+  //   return 'Q4';
+  // };
 
   /**
    * Parse Excel file with multiple sheets - NEW FORMAT with comparisons
@@ -250,7 +250,7 @@ export default function UploadKPI() {
         const tableName = getTableNameForDepartment(department);
         console.log(`Uploading ${validData.length} records to ${tableName}`);
         
-        const { data: uploadedData, error } = await supabase
+        const { data: _uploadedData, error } = await supabase
           .from(tableName)
           .insert(validData);
 
@@ -385,7 +385,6 @@ export default function UploadKPI() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.classList.remove('bg-teal-50', 'border-teal-400');
-    const file = e.dataTransfer.files[0];
     if (fileInputRef.current) {
       fileInputRef.current.files = e.dataTransfer.files;
       const event = new Event('change', { bubbles: true });

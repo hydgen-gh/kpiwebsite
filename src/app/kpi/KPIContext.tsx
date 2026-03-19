@@ -197,40 +197,33 @@ export const KPIProvider: React.FC<React.PropsWithChildren<{}>> = ({ children })
       
       console.log(`📊 Fetching KPI data for months:`, monthsToFetch, `year: ${yearToFetch}`);
       
-      const [mktRes, bdRes, prodRes, salesRes, mkgRes, rndRes, finRes] = await Promise.all([
-        supabase.from('marketing_dashboard').select('*').catch(() => ({ data: [] })),
-        supabase.from('bd_dashboard').select('*').catch(() => ({ data: [] })),
-        supabase
-          .from('product_kpis')
-          .select('*')
-          .in('month', monthsToFetch)
-          .eq('year', yearToFetch)
-          .catch(() => ({ data: null })),
-        supabase
-          .from('sales_kpis')
-          .select('*')
-          .in('month', monthsToFetch)
-          .eq('year', yearToFetch)
-          .catch(() => ({ data: null })),
-        supabase
-          .from('marketing_kpis')
-          .select('*')
-          .in('month', monthsToFetch)
-          .eq('year', yearToFetch)
-          .catch(() => ({ data: null })),
-        supabase
-          .from('rnd_kpis')
-          .select('*')
-          .in('month', monthsToFetch)
-          .eq('year', yearToFetch)
-          .catch(() => ({ data: null })),
-        supabase
-          .from('finance_kpis')
-          .select('*')
-          .in('month', monthsToFetch)
-          .eq('year', yearToFetch)
-          .catch(() => ({ data: null })),
-      ]);
+      const mktRes = await supabase.from('marketing_dashboard').select('*');
+      const bdRes = await supabase.from('bd_dashboard').select('*');
+      const prodRes = await supabase
+        .from('product_kpis')
+        .select('*')
+        .in('month', monthsToFetch)
+        .eq('year', yearToFetch);
+      const salesRes = await supabase
+        .from('sales_kpis')
+        .select('*')
+        .in('month', monthsToFetch)
+        .eq('year', yearToFetch);
+      const mkgRes = await supabase
+        .from('marketing_kpis')
+        .select('*')
+        .in('month', monthsToFetch)
+        .eq('year', yearToFetch);
+      const rndRes = await supabase
+        .from('rnd_kpis')
+        .select('*')
+        .in('month', monthsToFetch)
+        .eq('year', yearToFetch);
+      const finRes = await supabase
+        .from('finance_kpis')
+        .select('*')
+        .in('month', monthsToFetch)
+        .eq('year', yearToFetch);
 
       if (mktRes?.error) console.warn('Marketing fetch error (using sample data instead):', mktRes.error);
       if (bdRes?.error) console.warn('BD fetch error (using sample data instead):', bdRes.error);

@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
-import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TrendingUp, Target, Zap, AlertTriangle, CheckCircle2, DollarSign, Rocket, MapPin, TrendingDown, Fuel, Lightbulb, Upload, Award, Bell } from 'lucide-react';
-import { useKPI, getQuarterFromMonths } from '../kpi/KPIContext';
+import { useState } from 'react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { TrendingUp, Target, Zap, CheckCircle2, DollarSign, Rocket, MapPin, Fuel, Award, Bell } from 'lucide-react';
+import { useKPI } from '../kpi/KPIContext';
 import { useDashboardFilter } from '../../lib/dashboardFilterUtils';
 import { FilterStatusBadge } from './FilterStatusBadge';
-import { EmptyState } from './EmptyState';
 import { GrantTrackingSection } from './GrantTrackingSection';
 import { OperationalImprovements } from './OperationalImprovements';
 import { LABELS } from '../../config/labels';
 
 export default function OverviewDashboard() {
-  const { selectedMonths, comprehensiveKPIData } = useKPI();
+  const { comprehensiveKPIData, selectedMonths } = useKPI();
   const { getMonthDisplay, isCustomMode } = useDashboardFilter();
   const [showLegend, setShowLegend] = useState(true);
 
@@ -19,28 +18,28 @@ export default function OverviewDashboard() {
   const salesKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Sales');
   const marketingKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Marketing');
   const financeKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'Finance');
-  const rndKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'RnD');
+  // const rndKPIs = comprehensiveKPIData.filter((kpi) => kpi.department === 'RnD');
 
   const hasData = comprehensiveKPIData.length > 0;
 
   // Helper to get KPI value
-  const getKPIValue = (kpis: any[], name: string): number | null => {
+  const _getKPIValue = (kpis: any[], name: string): number | null => {
     const kpi = kpis.find((k) => k.kpi_name === name);
     return kpi?.current_month_actual || null;
   };
 
-  const getKPITarget = (kpis: any[], name: string): number | null => {
-    const kpi = kpis.find((k) => k.kpi_name === name);
-    return kpi?.current_month_target || null;
-  };
+  // const _getKPITarget = (kpis: any[], name: string): number | null => {
+  //   const kpi = kpis.find((k) => k.kpi_name === name);
+  //   return kpi?.current_month_target || null;
+  // };
 
   // Calculate key metrics from actual KPI data
-  const cashBalance = getKPIValue(financeKPIs, 'Cash Balance') || 3580000;
-  const revenueRecognized = getKPIValue(financeKPIs, 'Revenue Recognition') || 280000;
-  const systemsDelivered = getKPIValue(salesKPIs, 'Commercial Systems Delivered') || 1;
-  const onTimeDelivery = getKPIValue(salesKPIs, 'On-time Delivery') || 0;
-  const manufacturingYield = getKPIValue(productKPIs, 'Manufacturing Yield') || 100;
-  const inboundInquiries = getKPIValue(marketingKPIs, 'Qualified Inbound Inquiries') || 7;
+  const cashBalance = _getKPIValue(financeKPIs, 'Cash Balance') || 3580000;
+  const revenueRecognized = _getKPIValue(financeKPIs, 'Revenue Recognition') || 280000;
+  const systemsDelivered = _getKPIValue(salesKPIs, 'Commercial Systems Delivered') || 1;
+  const onTimeDelivery = _getKPIValue(salesKPIs, 'On-time Delivery') || 0;
+  const manufacturingYield = _getKPIValue(productKPIs, 'Manufacturing Yield') || 100;
+  const inboundInquiries = _getKPIValue(marketingKPIs, 'Qualified Inbound Inquiries') || 7;
   
   const strategicOutcomes = [
     { 
@@ -54,7 +53,7 @@ export default function OverviewDashboard() {
     },
     { 
       name: '250 kW Single Stack', 
-      current: hasData ? getKPIValue(productKPIs, 'BOM Cost Model Completeness') || 70 : 0, 
+      current: hasData ? _getKPIValue(productKPIs, 'BOM Cost Model Completeness') || 70 : 0, 
       target: 100, 
       icon: Target,
       status: 'at-risk' as const,
@@ -82,7 +81,7 @@ export default function OverviewDashboard() {
   ];
 
   // Calculate cash runway
-  const monthlyBurnRate = getKPIValue(financeKPIs, 'Monthly Burn Rate') || 410000;
+  const monthlyBurnRate = _getKPIValue(financeKPIs, 'Monthly Burn Rate') || 410000;
   const cashRunway = monthlyBurnRate > 0 ? Math.round(cashBalance / monthlyBurnRate) : 0;
 
   // ========================================================================
@@ -418,7 +417,7 @@ export default function OverviewDashboard() {
                   paddingAngle={2}
                   dataKey="value"
                 >
-                  {fundAllocationData.map((entry, index) => (
+                  {fundAllocationData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={FUND_COLORS[index]} />
                   ))}
                 </Pie>

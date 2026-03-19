@@ -216,8 +216,8 @@ interface TemplateOptions {
  */
 export function generateExcelTemplate(options: TemplateOptions = {}): ArrayBuffer {
   const {
-    month = 'February',
-    year = 2026,
+    // month = 'February',
+    // year = 2026,
     includeInstructions = true,
   } = options;
 

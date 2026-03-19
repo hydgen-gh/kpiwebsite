@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useKPI } from '../app/kpi/KPIContext';
 import { MONTH_QUARTER_MAP } from './quarterUtils';
-import { getComparisonLabel, isCurrentPeriod, CURRENT_MONTH } from './smartTimeUtils';
+import { getComparisonLabel, isCurrentPeriod } from './smartTimeUtils';
 
 export interface FilteredMonthData {
   selectedMonths: string[];
